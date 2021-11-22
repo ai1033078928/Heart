@@ -1,0 +1,114 @@
+/*
+
+SQL架构
+
+Table: Product
+
++--------------+---------+
+| Column Name  | Type    |
++--------------+---------+
+| product_id   | int     |
+| product_name | varchar |
+| unit_price   | int     |
++--------------+---------+
+product_id 是这个表的主键
+Table: Sales
+
++-------------+---------+
+| Column Name | Type    |
++-------------+---------+
+| seller_id   | int     |
+| product_id  | int     |
+| buyer_id    | int     |
+| sale_date   | date    |
+| quantity    | int     |
+| price       | int     |
++------ ------+---------+
+这个表没有主键，它可以有重复的行.
+product_id 是 Product 表的外键.
+编写一个SQL查询，报告2019年春季才售出的产品。即仅在2019-01-01至2019-03-31（含）之间出售的商品。
+
+查询结果格式如下所示：
+
+Product table:
++------------+--------------+------------+
+| product_id | product_name | unit_price |
++------------+--------------+------------+
+| 1          | S8           | 1000       |
+| 2          | G4           | 800        |
+| 3          | iPhone       | 1400       |
++------------+--------------+------------+
+
+Sales table:
++-----------+------------+----------+------------+----------+-------+
+| seller_id | product_id | buyer_id | sale_date  | quantity | price |
++-----------+------------+----------+------------+----------+-------+
+| 1         | 1          | 1        | 2019-01-21 | 2        | 2000  |
+| 1         | 2          | 2        | 2019-02-17 | 1        | 800   |
+| 2         | 2          | 3        | 2019-06-02 | 1        | 800   |
+| 3         | 3          | 4        | 2019-05-13 | 2        | 2800  |
++-----------+------------+----------+------------+----------+-------+
+
+Result table:
++-------------+--------------+
+| product_id  | product_name |
++-------------+--------------+
+| 1           | S8           |
++-------------+--------------+
+id为1的产品仅在2019年春季销售，其他两个产品在之后销售。
+————————————————
+版权声明：本文为CSDN博主「不吃西红柿丶」的原创文章，遵循CC 4.0 BY-SA版权协议，转载请附上原文出处链接及本声明。
+原文链接：https://blog.csdn.net/weixin_39032019/article/details/121418470
+
+*/
+
+alter table Product rename to Product_2;
+
+alter table Sales rename to Sales_2;
+
+
+create table Sales (
+                       seller_id     int ,
+                       product_id  int,
+                       buyer_id    int,
+                       sale_date   date ,
+                       quantity    int ,
+                       price       int
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+insert into Sales
+( seller_id , product_id , buyer_id , sale_date, quantity ,price) values
+( 1         , 1          , 1        , '2019-01-21' , 2        ,2000 ),
+( 1         , 2          , 2        , '2019-02-17' , 1        ,800  ),
+( 2         , 2          , 3        , '2019-06-02' , 1        ,800  ),
+( 3         , 3          , 4        , '2019-05-13' , 2        ,2800 );
+
+create table Product
+(
+    product_id   int PRIMARY KEY,
+    product_name varchar(20),
+    unit_price  int
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+insert into Product (product_id , product_name , unit_price ) values
+(1          , 'S8'           , 1000       ),
+(2          , 'G4'           , 800        ),
+(3          , 'iPhone'       , 1400       );
+
+
+select t1.product_id,t2.product_name
+from
+(
+    select product_id
+    from Sales a
+    where not exists (select 1
+                      from Sales b
+                      where (sale_date < date_format('2019-01-01','%Y-%m-%d')
+                          or
+                             sale_date > date_format('2019-03-31','%Y-%m-%d'))
+                        and a.product_id = b.product_id
+
+        )
+) t1
+left join Product t2
+       on t1.product_id = t2.product_id
