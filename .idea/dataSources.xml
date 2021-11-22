@@ -7,7 +7,12 @@
       <remarks>mysql</remarks>
       <jdbc-driver>com.mysql.cj.jdbc.Driver</jdbc-driver>
       <jdbc-url>jdbc:mysql://8.131.51.250:3306/leetcode</jdbc-url>
-      <working-dir>$ProjectFileDir$</working-dir>
+    </data-source>
+    <data-source source="LOCAL" name="leetcode@localhost" uuid="4dc4973c-7d78-450b-9380-fedc81f73884">
+      <driver-ref>mysql</driver-ref>
+      <synchronize>true</synchronize>
+      <jdbc-driver>com.mysql.jdbc.Driver</jdbc-driver>
+      <jdbc-url>jdbc:mysql://localhost:3306/leetcode</jdbc-url>
     </data-source>
   </component>
 </project>
