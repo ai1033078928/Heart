@@ -112,6 +112,6 @@ from (
                ,year as first_year
                ,quantity
                ,price
-               ,row_number() over (partition by product_id order by year asc) as rn
+               ,row_number() over (partition by product_id order by year) as rn
         from   Sales ) t
 where t.rn = 1
