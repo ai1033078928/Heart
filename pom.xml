@@ -14,6 +14,10 @@
     <properties>
         <mysql.version>5.1.49</mysql.version>
         <junit.version>4.12</junit.version>
+
+        <!--jdk版本（open jdk17）-->
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
     </properties>
 
 
