@@ -4,24 +4,30 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
                       http://maven.apache.org/maven-v4_0_0.xsd">
 
+    <!-- 模型版本。 -->
     <modelVersion>4.0.0</modelVersion>
 
+    <!-- 公司或者组织的唯一标志，并且配置时生成的路径也是由此生成， 如com.winner.trade，maven会将该项目打成的jar包放本地路径：/com/winner/trade -->
     <groupId>groupId</groupId>
+    <!-- 本项目的唯一ID，一个groupId下面可能多个项目，就是靠artifactId来区分的 -->
     <artifactId>Heart</artifactId>
+    <!-- 本项目目前所处的版本号 -->
     <version>1.0-SNAPSHOT</version>
+    <!-- 打包的机制，如pom,jar, maven-plugin, ejb, war, ear, rar, par，默认为jar -->
     <packaging>pom</packaging>
 
     <modules>
         <module>leetcode</module>
     </modules>
 
+    <!-- 为pom定义一些常量，在pom中的其它地方可以直接引用 使用方式 如下 ：${file.encoding} -->
     <properties>
         <mysql.version>5.1.49</mysql.version>
         <junit.version>4.12</junit.version>
 
-        <!--jdk版本（open jdk17）-->
-        <maven.compiler.source>17</maven.compiler.source>
-        <maven.compiler.target>17</maven.compiler.target>
+        <file.encoding>UTF-8</file.encoding>
+        <java.source.version>1.8</java.source.version>
+        <java.target.version>1.8</java.target.version>
     </properties>
 
 
@@ -33,6 +39,8 @@
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <version>${junit.version}</version>
+            <!-- maven认为，程序对外部的依赖会随着程序的所处阶段和应用场景而变化，所以maven中的依赖关系有作用域(scope)的限制。 -->
+            <!--scope包含如下的取值：compile（编译范围）、provided（已提供范围）、runtime（运行时范围）、test（测试范围）、system（系统范围） -->
             <scope>test</scope>
         </dependency>
 
@@ -46,5 +54,39 @@
         </dependency>
 
     </dependencies>
-    
+
+
+    <build>
+        <!-- finalName指定打包生成的文件名，默认为工程名-版本号 -->
+        <finalName>heart</finalName>
+
+        <plugins>
+            <!-- 指定jdk版本 -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.1</version>
+                <configuration>
+                    <!-- 源码的编译器版本 -->
+                    <source>${java.source.version}</source>
+                    <!-- class的编译器版本 -->
+                    <target>${java.target.version}</target>
+                </configuration>
+            </plugin>
+
+            <!--单元测试插件  -->
+            <!--<plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.0.0-M1</version>
+                <configuration>
+                    <parallel>methods</parallel>
+                    <threadCount>10</threadCount>
+                    &lt;!&ndash; 跳过测试 &ndash;&gt;
+                    <skip>true</skip>
+                </configuration>
+            </plugin>-->
+
+        </plugins>
+    </build>
 </project>
