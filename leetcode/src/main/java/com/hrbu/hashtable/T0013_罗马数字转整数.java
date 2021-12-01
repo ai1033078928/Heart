@@ -62,7 +62,7 @@ IL 和 IM 这样的例子并不符合题目要求，49 应该写作 XLIX，999 �
 链接：https://leetcode-cn.com/problems/roman-to-integer
 著作权归领扣网络所有。商业转载请联系官方授权，非商业转载请注明出处。
  */
-public class 罗马数字转整数 {
+public class T0013_罗马数字转整数 {
 
     // 初始化对应关系
     Map<Character, Integer> hashMap = new HashMap<Character, Integer> (){{
