@@ -79,3 +79,15 @@ where sum_weight <= 1000
 order by sum_weight desc
 limit 1
 ;
+
+
+select person_name from
+(
+select  person_name,sum(weight) over(order by turn) as tal from queue
+) t
+where tal <= 1000
+order by tal desc
+limit 1;
+
+-- SHOW VARIABLES LIKE 'version';
+-- SELECT VERSION();
