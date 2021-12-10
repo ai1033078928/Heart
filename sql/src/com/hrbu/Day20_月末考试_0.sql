@@ -160,8 +160,29 @@ left join sc
              where tea.TId is not null
         )
 ;
+
 -- 5. 查询没有学全所有课程的同学的信息
+/*select *
+from student
+where exists (
+        select *
+          from sc
+    )*/
+
 -- 6. 查询和" 01 "号的同学学习的课程 完全相同的其他同学的信息
+/*   select stu.*
+     from Student stu
+left join sc
+       on stu.SId = sc.SId
+left join (
+            -- 01同学的课程
+            select CId
+            from sc
+            where SId = '01'
+          ) t
+       on sc.CId = t.CId*/
+
+
 -- 7. 查询两门及其以上不及格课程的同学的学号，姓名及其平均成绩
 -- 8. 检索" 01 "课程分数小于 60，按分数降序排列的学生信息
 -- 9. 按平均成绩从高到低显示所有学生的所有课程的成绩以及平均成绩
