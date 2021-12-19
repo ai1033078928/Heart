@@ -1,5 +1,7 @@
 package com.hrbu.hashtable;
 
+import com.hrbu.util.ArrayToListNode;
+import com.hrbu.util.ListNode;
 import org.junit.Test;
 
 import java.util.HashSet;
@@ -18,19 +20,13 @@ import java.util.Set;
 链接：https://leetcode-cn.com/problems/linked-list-cycle
 著作权归领扣网络所有。商业转载请联系官方授权，非商业转载请注明出处。
 */
-public class T0141_环形链表_0 {
+public class T0141_环形链表 {
 
     @Test
     public void Main() {
-        ListNode node1 = new ListNode(3);
-        ListNode node2 = new ListNode(2);
-        ListNode node3 = new ListNode(0);
-        ListNode node4 = new ListNode(-4);
-
-        node1.next = node2;
-        node2.next = node3;
-        node3.next = node4;
-        node4.next = node2;
+        int[] nums = new int[]{3,2,0,-4};
+        ListNode node1 = ArrayToListNode.arrayToListNode(nums);
+        node1.next.next.next.next = node1.next;
 
         System.out.println(hasCycle(node1));
     }
@@ -50,11 +46,3 @@ public class T0141_环形链表_0 {
     }
 }
 
-class ListNode {
-    int val;
-    ListNode next;
-    ListNode(int x) {
-        val = x;
-        next = null;
-    }
-}
