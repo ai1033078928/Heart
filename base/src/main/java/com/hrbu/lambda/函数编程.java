@@ -4,7 +4,9 @@ import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 /**
  * 函数编程(lambda表达式)
@@ -60,11 +62,48 @@ public class 函数编程 {
 
     }
 
+    /**
+     * 分类：顺序流、并行流
+     */
+    @Test
+    public void Test3() {
+        long t0 = System.nanoTime();
+        // 顺序流
+        int[] ints = IntStream.range(0, 1_000_000).filter(v -> v % 2 == 0).toArray();
+
+        long t1 = System.nanoTime();
+
+        // 并行流
+        int[] ints1 = IntStream.range(0, 1_000_000).parallel().filter(v -> v % 2 == 0).toArray();
+        long t2 = System.nanoTime();
+
+        System.out.printf("顺序流%.2f s, 并行流%.2f s", (t1-t0)* 1.0E-09, (t2-t1)* 1.0E-09);
+    }
+
+    /**
+     * 匿名类
+     */
+    @Test
+    public void Test4() {
+        new Thread( () -> System.out.println("java test") ).start();
+    }
+
+    /**
+     * 方法引用
+     */
+    @Test
+    public void Test5() {
+        // 构造引用
+        Supplier<Person> s  = Person::new;
+
+
+    }
 }
 
 class Person {
     private String name;
 
+    public Person() { }
     public Person(String name) {
         this.name = name;
     }
