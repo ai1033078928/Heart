@@ -1,4 +1,4 @@
-package com.hrbu.hashtable;
+package com.hrbu.hashtable.easy;
 
 import org.junit.Test;
 

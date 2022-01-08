@@ -1,4 +1,4 @@
-package com.hrbu.hashtable;
+package com.hrbu.hashtable.easy;
 
 import org.junit.Test;
 
@@ -9,7 +9,7 @@ import java.util.Set;
 
 import static java.lang.Integer.*;
 
-public class T0242_有效的字母异位词_0 {
+public class T0242_有效的字母异位词 {
 
     @Test
     public void Main() {

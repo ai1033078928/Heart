@@ -79,6 +79,16 @@ insert into SC values('07' , '03' , 98);
 -- 3. 查询所有同学的学生编号、学生姓名、选课总数、所有课程的总成绩(没成绩的显示为 null )
 -- 4. 查询学过「张三」老师授课的同学的信息
 -- 5. 查询没有学全所有课程的同学的信息
+with num_course as (
+    select count(1) as num from course
+)
+
+   select stu.*
+     from Student stu
+left join sc
+       on stu.cid = sc.cid
+   having count(1) <  (select num from num_course limit 1)
+
 -- 6. 查询和" 01 "号的同学学习的课程 完全相同的其他同学的信息
 -- 7. 查询两门及其以上不及格课程的同学的学号，姓名及其平均成绩
 -- 8. 检索" 01 "课程分数小于 60，按分数降序排列的学生信息

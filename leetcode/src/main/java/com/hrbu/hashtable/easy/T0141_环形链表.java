@@ -1,4 +1,4 @@
-package com.hrbu.hashtable;
+package com.hrbu.hashtable.easy;
 
 import com.hrbu.util.ArrayToListNode;
 import com.hrbu.util.ListNode;
