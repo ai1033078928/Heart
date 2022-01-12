@@ -19,6 +19,7 @@
     <modules>
         <module>leetcode</module>
         <module>base</module>
+        <module>sqlparser</module>
         <module>Utils</module>
     </modules>
 
