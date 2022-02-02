@@ -52,12 +52,12 @@
             <version>${qrcode.version}</version>
         </dependency>
 
+        <!-- start 学习Excel -->
         <dependency>
             <groupId>com.alibaba</groupId>
             <artifactId>easyexcel</artifactId>
             <version>3.0.5</version>
         </dependency>
-
         <dependency>
             <groupId>com.alibaba</groupId>
             <artifactId>fastjson</artifactId>
@@ -69,6 +69,8 @@
             <version>RELEASE</version>
             <scope>compile</scope>
         </dependency>
+        <!-- end 学习Excel -->
+
     </dependencies>
 
 </project>

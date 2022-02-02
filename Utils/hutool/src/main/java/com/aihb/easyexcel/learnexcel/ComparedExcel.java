@@ -1,4 +1,4 @@
-package com.aihb.excel;
+package com.aihb.easyexcel.learnexcel;
 
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.ExcelReader;

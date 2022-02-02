@@ -1,3 +1,0 @@
-# 我是注释  == com.company.aaa.job.TestJob.run = */10 * * * *
-[com.hrbu.cron]
-定时任务.Test = */10 * * * * *
