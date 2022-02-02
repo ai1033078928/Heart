@@ -11,6 +11,7 @@
     <modules>
         <!--<module>apache</module>-->
         <module>hutool</module>
+        <module>sqlparser</module>
     </modules>
 
     <properties>
