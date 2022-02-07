@@ -1,0 +1,48 @@
+package com.hrbu.entity;
+
+public class Process {
+    private Integer id;
+
+    /**
+    * pid
+    */
+    private Integer pid;
+
+    /**
+    * 名称
+    */
+    private String name;
+
+    public Integer getId() {
+        return id;
+    }
+
+    public void setId(Integer id) {
+        this.id = id;
+    }
+
+    public Integer getPid() {
+        return pid;
+    }
+
+    public void setPid(Integer pid) {
+        this.pid = pid;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    @Override
+    public String toString() {
+        return "Process{" +
+                "id=" + id +
+                ", pid=" + pid +
+                ", name='" + name + '\'' +
+                '}';
+    }
+}
