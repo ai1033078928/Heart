@@ -1,7 +1,8 @@
-package com.hrbu.service;
+package com.hrbu.service.impl;
 
 import com.hrbu.entity.Process;
 import com.hrbu.mapper.ProcessMapper;
+import com.hrbu.service.ProcessSerivce;
 
 import javax.annotation.Resource;
 

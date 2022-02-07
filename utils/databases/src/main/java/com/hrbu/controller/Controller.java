@@ -1,6 +1,6 @@
 package com.hrbu.controller;
 
-import com.hrbu.service.ProcessServiceImpl;
+import com.hrbu.service.impl.ProcessServiceImpl;
 import org.junit.Test;
 
 import javax.annotation.Resource;
