@@ -13,7 +13,7 @@ public class 二维码工具 {
     @Test
     public void Test() {
         // 生成指定url对应的二维码到文件(也可以到流)，宽和高都是300像素
-        QrCodeUtil.generate("http://aihb.top/", 300, 300, FileUtil.file("D:\\Program Files\\JetBrains\\project\\Utils\\a_common\\qrcode.jpg"));
+        QrCodeUtil.generate("http://aihb.top/", 300, 300, FileUtil.file("D:\\Program Files\\JetBrains\\project\\utils\\a_common\\qrcode.jpg"));
 
     }
 

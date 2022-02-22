@@ -12,6 +12,7 @@
         <!--<module>apache</module>-->
         <module>hutool</module>
         <module>sqlparser</module>
+        <module>databases</module>
     </modules>
 
     <properties>

@@ -48,7 +48,7 @@ select id, dt, sum(lowcarbon) as lowcarbon
 from Main
 group by id, dt
 having sum(lowcarbon) > 100
-) t
+) t;
 
 
 -- 根据减完后的时间分组，大于等于3的即为连续3天
