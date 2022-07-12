@@ -1,14 +1,18 @@
 package com.hrbu.designpattern.observer;
 
+import java.util.List;
+import java.util.Observable;
+import java.util.Observer;
+
 public class ThirdPartyDisplay implements DisplayElement, Observer{
     private float tempreature;
     private float humidity;
     private float pressure;
-    private Subject subject;
+    private Observable observable;
 
-    public ThirdPartyDisplay(Subject sub) {
-        this.subject = sub;
-        subject.registerObserver(this);
+    public ThirdPartyDisplay(Observable weather) {
+        this.observable = weather;
+        this.observable.addObserver(this);
     }
 
     @Override
@@ -26,10 +30,13 @@ public class ThirdPartyDisplay implements DisplayElement, Observer{
     }
 
     @Override
-    public void update(float tempreature, float humidity, float pressure) {
-        this.tempreature = tempreature;
-        this.humidity = humidity;
-        this.pressure = pressure;
-        display();
+    public void update(Observable o, Object arg) {
+        if (o instanceof Weather) {
+            Weather weather = (Weather) o;
+            this.tempreature = weather.getTempreature();
+            this.humidity = weather.getHumidity();
+            this.pressure = weather.getPressure();
+            display();
+        }
     }
 }

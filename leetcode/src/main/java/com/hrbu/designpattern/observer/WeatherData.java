@@ -10,10 +10,10 @@ interface Subject{
 }
 
 public class WeatherData implements Subject {
-    float tempreature;
-    float humidity;
-    float pressure;
-    List<Observer> listObject;
+    private float tempreature;
+    private float humidity;
+    private float pressure;
+    private List<Observer> listObject;
 
     public WeatherData() {
         // 创建主题对象时，实例化存储观察者的集合
