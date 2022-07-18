@@ -40,3 +40,59 @@ pay_month	department_id	comparison
 版权声明：本文为CSDN博主「不吃西红柿丶」的原创文章，遵循CC 4.0 BY-SA版权协议，转载请附上原文出处链接及本声明。
 原文链接：https://blog.csdn.net/weixin_39032019/article/details/121358596
 */
+
+create table if not exists salary (
+id int ,
+employee_id	int ,
+amount DECIMAL (18, 4),
+pay_date date
+);
+
+insert into salary (id, employee_id, amount, pay_date) values
+(1,	1,	9000,	'2017-03-31'),
+(2,	2,	6000,	'2017-03-31'),
+(3,	3,	10000,	'2017-03-31'),
+(4,	1,	7000,	'2017-02-28'),
+(5,	2,	6000,	'2017-02-28'),
+(6,	3,	8000,	'2017-02-28')
+;
+
+create table if not exists employee (
+employee_id int ,
+department_id int
+);
+
+insert into employee (employee_id, department_id) values
+(1, 1),
+(2, 2),
+(3, 2)
+;
+
+
+select * from salary;
+select * from employee;
+
+-- 每个发薪日公司平均工资
+select  strftime('%Y-%m', T1.pay_date)
+       ,T1.department_id
+       ,case when T1.avg_amount > T2.avg_amount then 'higher'
+             when T1.avg_amount = T2.avg_amount then 'same'
+             when T1.avg_amount < T2.avg_amount then 'lower' end as comparison
+from (
+         select avg(a.amount) as avg_amount
+              ,a.pay_date
+              ,b.department_id
+         from salary a
+         left join employee b
+         on a.employee_id = b.employee_id
+         group by pay_date, b.department_id
+         ) T1
+left join
+(
+select avg(amount) as avg_amount
+       ,pay_date
+  from salary
+  group by pay_date
+) T2
+on T1.pay_date = T2.pay_date
+;
