@@ -11,6 +11,8 @@ import cn.hutool.crypto.SecureUtil;
 import cn.hutool.crypto.SmUtil;
 import cn.hutool.crypto.asymmetric.KeyType;
 import cn.hutool.crypto.asymmetric.SM2;
+import cn.hutool.crypto.symmetric.SymmetricAlgorithm;
+import cn.hutool.crypto.symmetric.SymmetricCrypto;
 import org.junit.Test;
 
 import java.io.File;
@@ -100,5 +102,43 @@ public class 加密解密 {
         list.addAll(Arrays.asList(values));
         return CollUtil.join(list, " ");
     }
+
+    @Test
+    public void Test() {
+        String content = "1T/VfITZXpxzlvtB68eKdv1EbyZTbV0ozqSk6WaU9Zw=";  // oqA3YKecxMsBSPIX+ulDOg==  8TccGZU+eDw/4duT4jIVkw==
+        String 职能职责 = "vw_pm_funcresp";
+        String 专项项目目录 = "vw_pm_specialdirectory";
+
+        //随机生成密钥
+        byte[] key = "bosssoft20220527".getBytes()/*SecureUtil.generateKey(SymmetricAlgorithm.AES.getValue()).getEncoded()*/;
+
+        //构建
+        SymmetricCrypto aes = new SymmetricCrypto(SymmetricAlgorithm.AES, key);
+
+        //加密
+        // byte[] encrypt = aes.encrypt(content);
+        //解密
+        // byte[] decrypt = aes.decrypt(encrypt);
+
+        //加密为16进制表示
+        // String encryptHex = aes.encryptHex(content);
+        //解密为字符串
+        String decryptStr = aes.decryptStr(content, CharsetUtil.CHARSET_UTF_8);
+        System.out.println(decryptStr);
+
+        System.out.println(aes.encryptBase64(职能职责, CharsetUtil.CHARSET_UTF_8));
+        System.out.println(aes.encryptBase64(专项项目目录, CharsetUtil.CHARSET_UTF_8));
+    }
+
+    /*@Test
+    public void Test2() {
+        BCryptPasswordEncoder bCryptPasswordEncoder = new BCryptPasswordEncoder();
+        *//*String hashPass = bCryptPasswordEncoder.encode("1");
+        System.out.println(hashPass);*//*
+
+        // $2a$10$aCJVHVsN1f2PZcjy3s7fReZW7APziBhiq62HPoB4JrsqOu/J2zFi.
+        boolean f = bCryptPasswordEncoder.matches("1","$2a$10$2iTnGTOC1.fMUiVE.QJEW.d66E.YAi3FIs7JZ76mBPw0Zv4GOxDt.");
+        System.out.println(f);
+    }*/
 
 }
