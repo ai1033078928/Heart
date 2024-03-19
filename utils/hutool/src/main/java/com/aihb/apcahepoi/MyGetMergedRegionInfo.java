@@ -38,7 +38,8 @@ public class MyGetMergedRegionInfo {
                     int lastCol = mergedRegion.getLastColumn();
                     FormulaEvaluator formulaEvaluator = sheet.getWorkbook().getCreationHelper().createFormulaEvaluator();
                     // 获取合并单元格所在行的所有值
-                    if (firstRow == 0 && lastRow == firstRow + 1) {
+                    // 只处理合并单元格在第一列且单元格占两行的数据
+                    if (firstCol == 0 && lastRow == firstRow + 1) {
                         // 获取合并单元格的值
                         Row row1 = sheet.getRow(firstRow);
                         Row row2 = sheet.getRow(lastRow);
