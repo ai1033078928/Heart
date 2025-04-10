@@ -1,0 +1,285 @@
+package org.example;
+
+import cn.hutool.core.util.CharsetUtil;
+import cn.hutool.core.util.StrUtil;
+import cn.hutool.db.Db;
+import cn.hutool.db.Entity;
+import cn.hutool.db.ds.DSFactory;
+import cn.hutool.setting.Setting;
+import cn.hutool.setting.dialect.Props;
+import org.example.utils.ReadZip;
+import org.example.utils.XmlUtil;
+import org.junit.Test;
+import sun.misc.BASE64Decoder;
+
+import javax.sql.DataSource;
+import java.io.IOException;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.*;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+
+
+public class Main {
+    final String zipPath = "E:\\Downloads\\ChromeDownload\\all_3200_1743683802694_QY_IN.zip";
+    final String fileName = "1-all-3200-rzpt_mlxx-1-2.xml";
+
+    Props props = new Props("default.properties");
+
+
+    //获取默认数据源
+    String c_sql = "create table DEBT_T_RZPT_MLXX\n" +
+            "(\n" +
+            "  ml_id            VARCHAR2(38) not null,\n" +
+            "  ag_id            VARCHAR2(38),\n" +
+            "  ag_code          VARCHAR2(60),\n" +
+            "  ag_name          VARCHAR2(200),\n" +
+            "  ad_code          VARCHAR2(38),\n" +
+            "  ad_name          VARCHAR2(200),\n" +
+            "  rzptlx_id        VARCHAR2(38),\n" +
+            "  gqlx_id          VARCHAR2(38),\n" +
+            "  hyly_id          VARCHAR2(38),\n" +
+            "  zgdw             VARCHAR2(300),\n" +
+            "  zzjg_code        VARCHAR2(38),\n" +
+            "  tyshxy_code      VARCHAR2(38),\n" +
+            "  is_gyxzbxm       NUMBER(1),\n" +
+            "  yg_num           NUMBER(10),\n" +
+            "  address          VARCHAR2(200),\n" +
+            "  gis              VARCHAR2(200),\n" +
+            "  frdb_name        VARCHAR2(38),\n" +
+            "  frdb_tel         VARCHAR2(38),\n" +
+            "  cwfzr_name       VARCHAR2(38),\n" +
+            "  cwfzr_tel        VARCHAR2(38),\n" +
+            "  bg_state         VARCHAR2(38) default '正常',\n" +
+            "  bg_date          VARCHAR2(10),\n" +
+            "  is_mlw           NUMBER(1),\n" +
+            "  is_sjqr          NUMBER(1),\n" +
+            "  set_year         NUMBER(4),\n" +
+            "  create_user      VARCHAR2(30),\n" +
+            "  create_date      VARCHAR2(20),\n" +
+            "  l_op_user        VARCHAR2(38),\n" +
+            "  l_op_date        VARCHAR2(30),\n" +
+            "  is_end           NUMBER(1),\n" +
+            "  wf_id            NUMBER(8),\n" +
+            "  node_current_id  NUMBER(8),\n" +
+            "  node_next_id     NUMBER(8),\n" +
+            "  wf_status        VARCHAR2(50),\n" +
+            "  is_qlzbpt        NUMBER(1),\n" +
+            "  zgdwlx_id        VARCHAR2(38),\n" +
+            "  is_yjrd          NUMBER(1),\n" +
+            "  ptzglx_id        VARCHAR2(38),\n" +
+            "  is_gyxxmdw       VARCHAR2(38),\n" +
+            "  err_check_status NUMBER(1) default 0 not null,\n" +
+            "  err_info         VARCHAR2(2000)\n" +
+            ")";
+
+    public static void main(String[] args) {
+        System.out.println("Hello world!");
+    }
+
+
+    @Test
+    public void getZipinfo() throws IOException {
+        for (String zipFileName : ReadZip.getZipFileNames(this.zipPath)) {
+            System.out.println(zipFileName);
+        }
+    }
+
+    @Test
+    public void getZipData() {
+        try {
+            System.out.println(this.getFileTextFromZip());
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    // @Test
+    public List<Map> getFileTextFromZip() throws Exception {
+        ReadZip readZip = new ReadZip();
+        XmlUtil xmlUtil = new XmlUtil();
+
+        String data = readZip.getFileFromZip(this.zipPath, this.fileName);
+//        System.out.println(data);
+
+        byte[] bytes = new BASE64Decoder().decodeBuffer(data);
+        String string = readZip.readDataFromBytesData(bytes);
+
+        Pattern p = Pattern.compile("[^\\u0009\\u000A\\u000D\\u0020-\\uD7FF\\uE000-\\uFFFD\\u10000-\\u10FFF]+");
+        String xml = p.matcher(string).replaceAll("");
+
+        // AESUtil.decrypt(XmlUtil.parseXmlString(xml), "")  未加密
+        return xmlUtil.parseXmlString(xml);
+
+    }
+
+
+    @Test
+    public void db_create_table() {
+        DataSource ds = DSFactory.get("db1");
+        Connection connection = null;
+        Statement stmt = null;
+        try {
+            connection = ds.getConnection();
+            stmt = connection.createStatement();
+            stmt.execute(c_sql); // 可先注释，确保表已存在
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        } finally {
+            try {
+                if (stmt != null) {
+                    stmt.close();
+                }
+                if (connection != null) {
+                    connection.close();
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    @Test
+    public void db_test() {
+        DataSource ds = DSFactory.get("db1");
+        try (Connection conn = ds.getConnection()) {
+            /*stmt.execute(c_sql);*/ // 可先注释，确保表已存在
+
+            List<Map> data = this.getFileTextFromZip();
+            if (data.isEmpty()) return;
+
+            // 初始化 columns 和 placeholders
+            StringBuffer columns = new StringBuffer(); // 原代码未初始化！
+            StringBuffer placeholders = new StringBuffer(); // 原代码未初始化！
+
+            // 从第一条数据获取字段名
+            Map<String, Object> firstRow = data.get(0);
+            for (String key : firstRow.keySet()) {
+                columns.append(key).append(", ");
+                placeholders.append("?, ");
+            }
+
+            // 去除最后一个逗号
+            columns = columns.delete(columns.length()-2, columns.length());
+            placeholders = placeholders.delete(placeholders.length()-2, placeholders.length());
+
+            // 构建 SQL 模板
+            StringBuffer finalColumns = columns;
+            StringBuffer finalPlaceholders = placeholders;
+            String insertSql = StrUtil.format(
+                "INSERT INTO DEBT_T_RZPT_MLXX({columns}) VALUES({placeholders})",
+                new HashMap<String, String>() {{
+                    put("columns", finalColumns.toString());
+                    put("placeholders", finalPlaceholders.toString());
+                }}
+            );
+
+            // 批量插入（示例）
+            try (PreparedStatement ps = conn.prepareStatement(insertSql)) {
+                conn.setAutoCommit(false);
+                for (Map<String, Object> row : data) {
+                    int i = 1;
+                    for (Object value : row.values()) {
+                        ps.setObject(i++, value);
+                    }
+                    ps.addBatch();
+                }
+                ps.executeBatch();
+                conn.commit();
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Test
+    public void db_sel() throws SQLException {
+        List<Entity> data = Db.use("db1").query("select * from DEBT_T_RZPT_MLXX");
+        data.forEach(row -> {
+            System.out.println(row.toString());
+        });
+    }
+
+    @Test
+    public void getDBConfTest(){
+        System.out.println(this.getDBConf().toString());
+    }
+    public List getDBConf() {
+        List entityList = null;
+        try {
+            entityList = Db.use("db1").query("select * from DEBT_T_EXC_CONFIG_PARAM where exc_type = ?", this.props.get("call_type"));
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+        return entityList;
+    }
+
+    @Test
+    public void partitionFile() throws IOException {
+        // List<String> zipFileNames = ReadZip.getZipFileNames(this.zipPath);
+        List<String> zipFileNames = new ArrayList<>(Arrays.asList(
+            "10-all-52-PROJECT_SYQK-1-2.xml",
+                "1-all-52-ELE_JGDW-1-1.xml",
+                "362-all-52-RZPT_ZCSX_JJTZQK_BG-1-1.xml",
+                "11-all-52-PROJECT_SYQK-2-2.xml"
+        ));
+
+        // 文件名解析与分组逻辑
+        Map<String, List<String>> groupedFiles = zipFileNames.stream()
+            .map(name -> {
+                // 正确拆分文件名（包含.xml扩展名会被拆分为7个部分）
+                String[] parts = name.replace(".xml", "").split("-");
+                if (parts.length < 6) { 
+                    throw new IllegalArgumentException("Invalid file name format: " + name);
+                }
+                return new FileNameInfo(parts, name); // 传递完整parts数组
+            })
+            // 调整排序逻辑为按firstPart和fifthPart排序
+            .sorted(Comparator.comparing(FileNameInfo::getFirstPart)
+                .thenComparing(FileNameInfo::getFifthPart))
+            .collect(Collectors.groupingBy(
+                FileNameInfo::getFourthPart, // 假设需要按ELE_JGDW分组（需确认字段）
+                LinkedHashMap::new,
+                Collectors.mapping(FileNameInfo::getOriginalName, Collectors.toList())
+            ));
+
+        // 输出分组结果
+        groupedFiles.forEach((key, value) -> System.out.println("分组1 " + key + "：" + value));
+    }
+
+    // 定义文件名信息类
+    class FileNameInfo {
+        private final String firstPart;
+        private final String fourthPart;
+        private final String fifthPart;
+        private final String originalName;
+
+        // 将构造函数参数改为接收完整parts数组
+        public FileNameInfo(String[] parts, String originalName) {
+            this.firstPart = parts[0];          // 第一个1
+            this.fourthPart = parts[3];        // 第四个部分（如"1"）
+            this.fifthPart = parts[4];         // 第五个部分（如"1"）
+            this.originalName = originalName;
+        }
+
+        public String getFirstPart() {
+            return firstPart;
+        }
+
+        public String getFourthPart() {
+            return fourthPart;
+        }
+
+        public String getFifthPart() {
+            return fifthPart;
+        }
+
+        public String getOriginalName() {
+            return originalName;
+        }
+    }
+
+}

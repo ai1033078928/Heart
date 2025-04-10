@@ -1,0 +1,143 @@
+import com.example.psbc_export.export.ExportTxt;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.stereotype.Component;
+import java.io.IOException;
+import java.util.List;
+import java.util.Map;
+
+@Component
+public class DataPushService {
+
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
+
+    public void queryDataToFile(String date) {
+        System.out.println("执行查询");
+        long start = System.currentTimeMillis();
+        List list = jdbcTemplate.queryForList("SELECT a.XMID,\n" +
+                "                                          a.ZQMC,\n" +
+                "                                          b.PUB_DATE,\n" +
+                "                                          a.XMQH,\n" +
+                "                                          a.XMMC,\n" +
+                "                                          a.XMZGDWMC,\n" +
+                "                                          a.XMDWMC,\n" +
+                "                                          a.XMPJJG,\n" +
+                "                                          a.FLYJJG,\n" +
+                "                                          a.XMPJIJG,\n" +
+                "                                          a.ZXZQRZZE,\n" +
+                "                                          a.BCZQRZJE,\n" +
+                "                                          a.XMZTZ,\n" +
+                "                                          a.XMZBJ,\n" +
+                "                                          a.SYZXZQYZZBJ,\n" +
+                "                                          a.XMKGRQ,\n" +
+                "                                          a.XMJGRQ,\n" +
+                "                                          a.XMJSQ,\n" +
+                "                                          a.XMYYQ,\n" +
+                "                                          a.YJSR,\n" +
+                "                                          a.YQCB,\n" +
+                "                                          a.SY,\n" +
+                "                                          a.JLR,\n" +
+                "                                          a.ZXZQLX,\n" +
+                "                                          a.SCHRZBJ,\n" +
+                "                                          a.BXFGBS,\n" +
+                "                                          a.XMLX,\n" +
+                "                                          a.ZJTX,\n" +
+                "                                          a.FLYJS,\n" +
+                "                                          a.XYPJBG,\n" +
+                "                                          a.CWPJBG,\n" +
+                "                                          a.XMSSFA FROM dsy_bond_plat.crawler_t_fact_bond_xmxx a left join (select pub_date, bond_name from dsy_crawler.crawler_t_fact_bond_hbfx group by pub_date, bond_name) b\n" +
+                "                                                                                                           on a.ZQMC = b.BOND_NAME  where substr(b.pub_date, 1, 7) = '" + date + "'");
+        System.out.println("数据量：" + list.size());
+        System.out.println("查询耗时：" + (System.currentTimeMillis() - start)/1000);
+        for(int i = 0; i < list.size(); i++) {
+            if(i % 1000 == 0) {
+                System.out.println("序号：" + i);
+            }
+            Map map = (Map) list.get(i);
+            String FLYJS = (String) map.get("FLYJS");
+            String XYPJBG = (String) map.get("XYPJBG");
+            String CWPJBG = (String) map.get("CWPJBG");
+            String XMSSFA = (String) map.get("XMSSFA");
+            handler(map, FLYJS, "FLYJS");
+            handler(map, XYPJBG, "XYPJBG");
+            handler(map, CWPJBG, "CWPJBG");
+            handler(map, XMSSFA, "XMSSFA");
+        }
+        System.out.println("查询耗时1：" + (System.currentTimeMillis() - start)/1000);
+        // ExcelExporter exporter = new ExcelExporter();
+        String fileName = "项目明细数据202406.txt";
+        try {
+            // exporter.exportToExcel(list, fileName); // 导出excel
+            System.out.println("输出数据量：" + list.size());
+            ExportTxt.export(list, fileName);
+            System.out.println("执行结束");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void handler(Map map, String value, String key) {
+        if(value != null && !"".equals(value)) {
+            if((value.startsWith("Z") || value.startsWith("D")) && value.length() == 33) {
+                List a = jdbcTemplate.queryForList("select title,path from dsy_crawler.crawler_t_src_bond_doc_zip where zip_id = ?", new Object[]{value.substring(1)});
+                if(a.size() > 0) {
+                    Map map1 = (Map) a.get(0);
+                    map.put(key, map1.get("title"));
+                    if(null != map1.get("path")) {
+                        String path = (String) map1.get("path");
+                        map.put(key + "_PATH", path.substring(path.indexOf("/国债地方债")));
+                    }
+                }else {
+                    List b = jdbcTemplate.queryForList("select title,path from dsy_crawler.crawler_t_src_bond_doc_detail where bond_doc_id = ?", new Object[]{value.substring(1)});
+                    if(b.size() > 0) {
+                        Map map1 = (Map) b.get(0);
+                        map.put(key, map1.get("title"));
+                        if(null != map1.get("path")) {
+                            String path = (String) map1.get("path");
+                            map.put(key + "_PATH", path.substring(path.indexOf("/国债地方债")));
+                        }
+                    }
+                }
+            }else {
+                if(value.length() == 32 && isAlphaNumeric(value)) {
+                    List a = jdbcTemplate.queryForList("select title,path from dsy_crawler.crawler_t_src_bond_doc_detail where bond_doc_id = ?", new Object[]{value});
+                    if(a.size() > 0) {
+                        Map map1 = (Map) a.get(0);
+                        map.put(key, map1.get("title"));
+                        if(null != map1.get("path")) {
+                            String path = (String) map1.get("path");
+                            map.put(key + "_PATH", path.substring(path.indexOf("/国债地方债")));
+                        }
+                    }
+                }else {
+                    value = value.replace(" ", "");
+                    value = value.replace("（", "(");
+                    value = value.replace("）", ")");
+                    List a = jdbcTemplate.queryForList("select title,path from dsy_crawler.crawler_t_src_bond_doc_source where title1 like concat(?, '%')", new Object[]{value});
+                    if(a.size() > 0) {
+                        Map map1 = (Map) a.get(0);
+                        map.put(key, map1.get("title"));
+                        if(null != map1.get("path")) {
+                            String path = (String) map1.get("path");
+                            map.put(key + "_PATH", path.substring(path.indexOf("/国债地方债")));
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    public boolean isAlphaNumeric(String str) {
+        return str.matches("[a-zA-Z0-9]+");
+    }
+
+    public void queryProvinceToFile() throws IOException {
+        List list = jdbcTemplate.queryForList("SELECT (SELECT MAX(NAME) FROM dsy_bond_plat.DSY_V_ELE_AD T1 WHERE T1.CODE = SUBSTR(T.CODE,1,2)) LEVEL1,\n" +
+                "       (SELECT MAX(NAME) FROM dsy_bond_plat.DSY_V_ELE_AD T1 WHERE T1.CODE = CASE WHEN SUBSTR(T.CODE,1,2) IN ('11','12','50','31') THEN SUBSTR(T.CODE,1,6) ELSE SUBSTR(T.CODE,1,4) END) LEVEL2,\n" +
+                "       (SELECT MAX(NAME) FROM dsy_bond_plat.DSY_V_ELE_AD T1 WHERE T1.CODE = SUBSTR(T.CODE,1,6)) LEVEL3,\n" +
+                "       T.LEVELNO FROM dsy_bond_plat.DSY_V_ELE_AD T WHERE T.ISLEAF = '1' ORDER BY CODE;");
+        ExportTxt.exportProvince(list, "区划基本信息表202405.txt");
+        System.out.println("执行结束");
+    }
+}

@@ -1,13 +1,3 @@
-.idea
-*.iml
-*.class
-/**/target
-/**/test.xlsx
-/**/*.db
-_102.hutool_utils/src/main/resources/files
-
-
-
 target/
 !.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/

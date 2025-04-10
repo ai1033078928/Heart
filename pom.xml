@@ -17,18 +17,53 @@
     <packaging>pom</packaging>
 
     <modules>
-        <module>leetcode</module>
-        <module>utils</module>
+        <module>_001.leetcode</module>
+        <module>_002.designpattern</module>
+        <module>_101.apache_utils</module>
+        <module>_102.hutool_utils</module>
+        <module>_103.sqlparser_utils</module>
+        <module>_104.databases_utils</module>
+        <module>_201.zip2db</module>
     </modules>
 
     <!-- 为pom定义一些常量，在pom中的其它地方可以直接引用 使用方式 如下 ：${file.encoding} -->
     <properties>
-        <mysql.version>5.1.49</mysql.version>
-        <junit.version>4.12</junit.version>
-
         <file.encoding>UTF-8</file.encoding>
         <java.source.version>1.8</java.source.version>
         <java.target.version>1.8</java.target.version>
+
+        <junit.version>4.13.1</junit.version>
+
+        <alibaba.easyexcel>3.0.5</alibaba.easyexcel>
+        <alibaba.fastjson>1.2.75</alibaba.fastjson>
+        <alibaba.druid>1.1.19</alibaba.druid>
+        <slf4j.api>2.0.9</slf4j.api>
+
+        <google.guava>20.0</google.guava>
+
+        <apache.lang3>3.1</apache.lang3>
+        <apache.io>2.11.0</apache.io>
+        <apache.csv>1.9.0</apache.csv>
+        <apache.commons.cli>1.5.0</apache.commons.cli>
+        <apache.poi>5.2.2</apache.poi>  <!--xls(03)-->
+        <apache.poi.ooxml>5.2.2</apache.poi.ooxml>  <!--xlsx(07)-->
+
+        <hutool.version>5.8.23</hutool.version>
+        <mail.version>1.6.2</mail.version>
+        <qrcode.version>3.4.1</qrcode.version>
+        <bouncycastle.version>1.70</bouncycastle.version>  <!--国密算法工具-SmUtil-->
+        <itextpdf.version>8.0.2</itextpdf.version>  <!-- pdf依赖 -->
+
+        <mybatis.version>3.5.4</mybatis.version>
+        <mysql.version>5.1.49</mysql.version>
+        <ojdbc6.version>11.2.0.3</ojdbc6.version>
+        <sqlite.version>3.36.0.3</sqlite.version>
+        <jedis.version>2.9.0</jedis.version>
+
+        <!-- 其他 -->
+        <jsqlparser.version>4.3</jsqlparser.version>  <!-- sql格式化 -->
+        <opencsv.version>5.9</opencsv.version>
+        <!--<spring.security>2.7.0</spring.security>-->
     </properties>
 
 
@@ -36,23 +71,23 @@
 
         <!--单元测试-->
         <!-- https://mvnrepository.com/artifact/junit/junit -->
-        <dependency>
+        <!--<dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <version>${junit.version}</version>
-            <!-- maven认为，程序对外部的依赖会随着程序的所处阶段和应用场景而变化，所以maven中的依赖关系有作用域(scope)的限制。 -->
-            <!--scope包含如下的取值：compile（编译范围）、provided（已提供范围）、runtime（运行时范围）、test（测试范围）、system（系统范围） -->
+            &lt;!&ndash; maven认为，程序对外部的依赖会随着程序的所处阶段和应用场景而变化，所以maven中的依赖关系有作用域(scope)的限制。 &ndash;&gt;
+            &lt;!&ndash;scope包含如下的取值：compile（编译范围）、provided（已提供范围）、runtime（运行时范围）、test（测试范围）、system（系统范围） &ndash;&gt;
             <scope>test</scope>
-        </dependency>
+        </dependency>-->
 
 
         <!--mysql 5.x 连接依赖-->
         <!-- https://mvnrepository.com/artifact/mysql/mysql-connector-java -->
-        <dependency>
+        <!--<dependency>
             <groupId>mysql</groupId>
             <artifactId>mysql-connector-java</artifactId>
             <version>${mysql.version}</version>
-        </dependency>
+        </dependency>-->
 
     </dependencies>
 
