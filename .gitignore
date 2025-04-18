@@ -5,7 +5,8 @@
 /**/test.xlsx
 /**/*.db
 _102.hutool_utils/src/main/resources/files
-
+testflinkcdc
+/**/src/test/java
 
 
 target/
