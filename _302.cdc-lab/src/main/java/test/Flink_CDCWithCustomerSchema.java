@@ -1,32 +1,31 @@
 package test;
 
 import com.alibaba.fastjson.JSONObject;
-import com.alibaba.ververica.cdc.connectors.mysql.MySQLSource;
-import com.alibaba.ververica.cdc.connectors.mysql.table.StartupOptions;
-import com.alibaba.ververica.cdc.debezium.DebeziumDeserializationSchema;
-import com.alibaba.ververica.cdc.debezium.DebeziumSourceFunction;
+
+import com.ververica.cdc.connectors.mysql.MySqlSource;
+import com.ververica.cdc.connectors.mysql.table.StartupOptions;
+import com.ververica.cdc.debezium.DebeziumDeserializationSchema;
+import com.ververica.cdc.debezium.DebeziumSourceFunction;
 import io.debezium.data.Envelope;
-import org.apache.flink.api.common.restartstrategy.RestartStrategies;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
-import org.apache.flink.runtime.state.filesystem.FsStateBackend;
-import org.apache.flink.streaming.api.CheckpointingMode;
-import org.apache.flink.streaming.api.datastream.DataStreamSource;
-import org.apache.flink.streaming.api.environment.CheckpointConfig;
+import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.streaming.api.functions.sink.RichSinkFunction;
 import org.apache.flink.util.Collector;
-import org.apache.kafka.connect.data.Field;
-import org.apache.kafka.connect.data.Schema;
 import org.apache.kafka.connect.data.Struct;
 import org.apache.kafka.connect.source.SourceRecord;
+
 import java.util.Properties;
+
 public class Flink_CDCWithCustomerSchema {
     public static void main(String[] args) throws Exception {
         //1.创建执行环境
-        StreamExecutionEnvironment env =
-                StreamExecutionEnvironment.getExecutionEnvironment();
-        env.setParallelism(1);
+        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+        env.setParallelism(2);
+
+
         //2.创建 Flink-MySQL-CDC 的 Source
-        DebeziumSourceFunction<String> mysqlSource = MySQLSource.<String>builder()
+        DebeziumSourceFunction<String> mysqlSource = MySqlSource.<String>builder()
                 .hostname("127.0.0.1")
                 .port(3306)
                 .username("root")
@@ -67,6 +66,7 @@ public class Flink_CDCWithCustomerSchema {
                         //发送数据至下游
                         collector.collect(result.toJSONString());
                         */
+                        collector.collect(sourceRecord.toString());
                         collector.collect(value.toString());
 
                     }
@@ -76,11 +76,28 @@ public class Flink_CDCWithCustomerSchema {
                     }
                 })
                 .build();
+
         //3.使用 CDC Source 从 MySQL 读取数据
-        DataStreamSource<String> mysqlDS = env.addSource(mysqlSource);
-        //4.打印数据
-         mysqlDS.print();
+        // DataStreamSource<String> mysqlDS = env.addSource(mysqlSource);
+        // mysqlDS.print()
+        env.addSource(mysqlSource).addSink(new ConsoleSink());
         //5.执行任务
-        env.execute();
+        env.execute("MySQL CDC Example");
     }
+
+
+    /**
+     * 写 Log 到控制台
+     */
+    public static class ConsoleSink extends RichSinkFunction<String> {
+
+        public void open(Configuration parameters) throws Exception {
+        }
+
+        public void invoke(String value, Context context) throws Exception {
+            System.out.println(value);
+        }
+    }
+
 }
+
