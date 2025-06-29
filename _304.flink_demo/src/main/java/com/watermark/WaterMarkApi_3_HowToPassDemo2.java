@@ -50,7 +50,7 @@ public class WaterMarkApi_3_HowToPassDemo2 {
                             return element.getAge() * 1000L;  // 假设是时间
                         }
                 )
-                // TODO 1.3 设置空闲等待时间；此为现实时间而非事件事件
+                // TODO 1.3 设置空闲等待时间；此为现实时间而非事件事件（为解决：上游一个分区如果一直没来数据，则watermark一直不会变）
                 .withIdleness(Duration.ofSeconds(20));
 
         KeyedStream<User, String> keyed = socketTextStream
