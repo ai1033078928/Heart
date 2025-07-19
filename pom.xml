@@ -19,6 +19,7 @@
     <modules>
         <module>_001.leetcode</module>
         <module>_002.designpattern</module>
+        <module>_003.baseutil_usage</module>
         <module>_101.apache_utils</module>
         <module>_102.hutool_utils</module>
         <module>_103.sqlparser_utils</module>
@@ -86,6 +87,9 @@
         <!-- 分布式缓存？ -->
         <!--<version.infinispan>13.0.17.Final</version.infinispan>
         <version.infinispan.protostream>4.4.4.Final</version.infinispan.protostream>-->
+
+
+        <quartz.version>2.3.2</quartz.version>
     </properties>
 
 

@@ -1,0 +1,47 @@
+<?xml version="1.0"?>
+<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
+<configuration>
+    <!--将该name对应的value修改为MySQL的地址-->
+    <property>
+        <name>javax.jdo.option.ConnectionURL</name>
+        <value>jdbc:mysql://hadoop10:3306/metastore?createDatabaseIfNotExist=true&amp;characterEncoding=UTF-8&amp;useSSL=false</value>
+        <description>JDBC connect string for a JDBC metastore</description>
+    </property>
+    <!--将该name对应的value修改为MySQL驱动类路径：-->
+    <property>
+        <name>javax.jdo.option.ConnectionDriverName</name>
+        <!--<value>com.mysql.jdbc.Driver</value>-->
+	<value>com.mysql.cj.jdbc.Driver</value>
+        <description>Driver class name for a JDBC metastore</description>
+    </property>
+    <!--将对应的value修改为MySQL数据库登录名-->
+    <property>
+        <name>javax.jdo.option.ConnectionUserName</name>
+        <value>root</value>
+        <description>username to use against metastore database</description>
+    </property>
+    <!--将对应的value修改为MySQL数据库的登录密码-->
+    <property>
+        <name>javax.jdo.option.ConnectionPassword</name>
+        <value>123456</value>
+        <description>password to use against metastore database</description>
+    </property>
+    <!--指定 hiveserver2 连接的 host -->
+    <property>
+        <name>hive.server2.thrift.bind.host</name>
+        <value>0.0.0.0</value>
+        <description>Bind host on which HiveServer2 will listen for incoming requests.</description>
+    </property>
+    <!--指定 hiveserver2 连接的端口号-->
+    <property>
+        <name>hive.server2.thrift.port</name>
+        <value>10000</value>
+        <description>Port number on which HiveServer2 will listen for incoming requests.</description>
+    </property>
+
+	<!-- 指定 metastore 服务的地址 --> 
+	<property>
+		<name>hive.metastore.uris</name>
+		<value>thrift://hadoop10:9083</value>
+	</property>
+</configuration>

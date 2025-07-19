@@ -1,4 +1,4 @@
-package org.example.utils;
+package readzip.utils;
 
 import cn.hutool.core.util.StrUtil;
 

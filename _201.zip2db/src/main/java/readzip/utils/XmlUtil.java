@@ -1,4 +1,4 @@
-package org.example.utils;
+package readzip.utils;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;

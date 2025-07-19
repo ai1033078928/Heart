@@ -1,11 +1,11 @@
-package org.example;
+package readzip;
 
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.db.Db;
 import cn.hutool.db.Entity;
 import cn.hutool.setting.dialect.Props;
-import org.example.utils.ReadZip;
-import org.example.utils.XmlUtil;
+import readzip.utils.ReadZip;
+import readzip.utils.XmlUtil;
 import org.junit.Test;
 import sun.misc.BASE64Decoder;
 
