@@ -1,4 +1,4 @@
-package example.quartz;
+package example.quartz.base;
 
 import org.apache.commons.lang3.StringUtils;
 import org.quartz.Job;
