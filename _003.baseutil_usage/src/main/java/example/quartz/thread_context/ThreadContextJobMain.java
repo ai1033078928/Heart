@@ -1,23 +1,28 @@
-package example.quartz.no_cross;
+package example.quartz.thread_context;
 
 import org.quartz.*;
 import org.quartz.impl.StdSchedulerFactory;
 
-public class Main {
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
+public class ThreadContextJobMain {
 
     public static void main(String[] args) {
         try {
-            new Main().schedulerTest();
+            new ThreadContextJobMain().schedulerTest();
         } catch (SchedulerException e) {
             throw new RuntimeException(e);
         }
     }
 
     public void schedulerTest() throws SchedulerException {
+        ExecutorService executor = Executors.newFixedThreadPool(3);
 
         JobDataMap jobDataMap = new JobDataMap();
         jobDataMap.put("jobName", "心跳");
         jobDataMap.put("jobInfo", "心跳信号");
+        jobDataMap.put("executor", executor);
 
         // 创建JobBuilder 获取要执行的job
         JobDetail jobDetail = JobBuilder
@@ -53,6 +58,7 @@ public class Main {
         Runtime.getRuntime().addShutdownHook(new Thread("shutdown") {
             @Override
             public void run() {
+                executor.shutdown();
                 System.out.println("close resource...... 关闭资源......");
             }
         });

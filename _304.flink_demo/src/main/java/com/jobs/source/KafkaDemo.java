@@ -18,7 +18,7 @@ public class KafkaDemo {
         KafkaSource<String> kafkaSource = KafkaSource.<String>builder()
                 .setBootstrapServers("8.8.8.10:9092")
                 .setGroupId("ConsumerGroup-1")
-                .setTopics("topic-1")
+                .setTopics("topic-1,topic-2,topic-3".split(","))
                 .setStartingOffsets(OffsetsInitializer.latest())
                 .setValueOnlyDeserializer(new SimpleStringSchema())
                 .build();

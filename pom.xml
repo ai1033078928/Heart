@@ -25,6 +25,7 @@
         <module>_103.sqlparser_utils</module>
         <module>_104.databases_utils</module>
         <module>_201.zip2db</module>
+        <module>_202.spring_demo</module>
         <module>_302.cdc-lab</module>
         <module>_303.hive_functions</module>
         <module>_304.flink_demo</module>
@@ -90,6 +91,7 @@
 
 
         <quartz.version>2.3.2</quartz.version>
+        <swagger.version>3.0.0</swagger.version>
     </properties>
 
 

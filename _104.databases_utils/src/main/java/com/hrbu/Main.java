@@ -1,6 +1,7 @@
 package com.hrbu;
 
 import com.hrbu.entity.Process;
+import org.apache.ibatis.cursor.Cursor;
 import org.apache.ibatis.io.Resources;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.ibatis.session.SqlSessionFactory;

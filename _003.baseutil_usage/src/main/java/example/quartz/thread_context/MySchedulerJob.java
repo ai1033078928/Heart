@@ -1,4 +1,4 @@
-package example.quartz.no_cross;
+package example.quartz.thread_context;
 
 import org.apache.commons.lang3.StringUtils;
 import org.quartz.Job;
@@ -39,29 +39,27 @@ public class MySchedulerJob implements Job {
             // TODO 在此创建多线程任务？？？
             int taskNum = 5;
             CountDownLatch latch = new CountDownLatch(taskNum);
-            ExecutorService executor = Executors.newFixedThreadPool(3);
+            ExecutorService executor = (ExecutorService)jobDataMap.get("executor");
+            if (null == executor) System.exit(0);
             Random random = new Random();
 
             logger.info("开始多线程执行任务...");
             for (int i = 1; i <= taskNum; i++) {
                 final int finalI = i;
                 executor.submit(() -> {
-
-                    Thread.currentThread().setName(jobName + "_" + finalI);
                     try {
                         Thread.sleep((random.nextInt(4) + 1) * 1000);  // 随机睡眠2~4秒
                     } catch (InterruptedException e) {
                         throw new RuntimeException(e);
                     }
                     latch.countDown();
-
                     logger.info(StringUtils.join(Thread.currentThread().getName(), "执行完成。info：", jobInfo));
                 });
             }
 
             try {
                 latch.await();
-                executor.shutdown();
+                // executor.shutdown();
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             } finally {

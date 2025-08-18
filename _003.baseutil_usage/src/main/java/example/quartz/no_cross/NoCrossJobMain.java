@@ -1,13 +1,13 @@
-package example.quartz.base;
+package example.quartz.no_cross;
 
 import org.quartz.*;
 import org.quartz.impl.StdSchedulerFactory;
 
-public class Main {
+public class NoCrossJobMain {
 
     public static void main(String[] args) {
         try {
-            new Main().schedulerTest();
+            new NoCrossJobMain().schedulerTest();
         } catch (SchedulerException e) {
             throw new RuntimeException(e);
         }
@@ -37,7 +37,7 @@ public class Main {
                 .withSchedule(
                         SimpleScheduleBuilder
                                 .simpleSchedule()
-                                .withIntervalInSeconds(10)
+                                .withIntervalInSeconds(3)
                                 .repeatForever()   // 指定触发器将无限重复
                 )
                 .build();
