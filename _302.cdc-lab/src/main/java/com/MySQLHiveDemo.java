@@ -1,4 +1,4 @@
-package test;
+package com;
 
 import org.apache.flink.table.api.EnvironmentSettings;
 import org.apache.flink.table.api.TableEnvironment;
