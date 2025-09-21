@@ -1,4 +1,4 @@
-package cn.job;
+package cn;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -12,7 +12,7 @@ import org.springframework.core.env.Environment;
 
 @Slf4j
 @SpringBootApplication
-@ComponentScan(basePackages = "cn")
+//@ComponentScan(basePackages = "cn")
 public class ApplicationJob implements CommandLineRunner {
 
     @Autowired

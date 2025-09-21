@@ -71,11 +71,11 @@
             <artifactId>flink-connector-mysql-cdc</artifactId>
             <version>${flink-mysql-cdc.version}</version>
         </dependency>
-        <!--<dependency>
+        <dependency>
             <groupId>org.apache.flink</groupId>
             <artifactId>flink-connector-jdbc</artifactId>
-            <version>${flink.version}</version>
-        </dependency>-->
+            <version>${flink-connector.version}</version>
+        </dependency>
 
         <!-- 个人项目依赖 -->
         <dependency>
@@ -98,7 +98,7 @@
 
 
         <!--Flink 默认使用的是 slf4j 记录日志，相当于一个日志的接口,我们这里使用 log4j 作为具体的日志实现-->
-        <!--<dependency>
+        <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
             <version>${slf4j.api}</version>
@@ -108,7 +108,7 @@
             <artifactId>slf4j-log4j12</artifactId>
             <version>${slf4j-log4j12.version}</version>
         </dependency>
-        <dependency>
+        <!--<dependency>
             <groupId>org.apache.logging.log4j</groupId>
             <artifactId>log4j-to-slf4j</artifactId>
             <version>${log4j-to-slf4j.version}</version>
@@ -183,12 +183,6 @@
         <dependency>
             <groupId>org.apache.flink</groupId>
             <artifactId>flink-connector-kafka</artifactId>
-            <version>${flink-connector.version}</version>
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.flink</groupId>
-            <artifactId>flink-connector-jdbc</artifactId>
             <version>${flink-connector.version}</version>
             <scope>compile</scope>
         </dependency>

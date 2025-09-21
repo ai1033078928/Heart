@@ -1,4 +1,4 @@
-package com.stream;
+package com.stream.kafka_source;
 
 import com.alibaba.fastjson.JSONObject;
 import com.stream.entity.SparkStreamTopicConfEntity;

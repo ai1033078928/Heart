@@ -40,6 +40,11 @@
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
+        <!-- Quartz Starter -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-quartz</artifactId>
+        </dependency>
 
         <!-- spring jpa -->
         <!-- JPA（Java Persistence API）Java 持久化 API，是 Java 持久化的标准规范，Hibernate 是持久化规范的技术实现，而 Spring Data JPA 是在 Hibernate 基础上封装的一款框架。 -->
@@ -141,6 +146,17 @@
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
             <version>${apache.lang3}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-compress</artifactId>
+            <version>${apache.compress}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-client-api</artifactId>
+            <version>3.3.6</version>
+            <scope>compile</scope>
         </dependency>
 
 
