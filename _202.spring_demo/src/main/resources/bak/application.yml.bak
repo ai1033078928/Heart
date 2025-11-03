@@ -1,0 +1,32 @@
+logging:
+  config: classpath:log4j2-spring-dev.xml  # 默认名为 log4j2-spring.xml，则不需要配置
+  level:
+    cn.jay.repository: trace
+
+# 启动报错需要修改以下mvc配置 Failed to start bean 'documentationPluginsBootstrapper'
+#  Springfox使用的路径匹配是基于AntPathMatcher的，而Spring Boot 2.6.X使用的是PathPatternMatcher。
+spring:
+  mvc:
+    pathmatch:
+      matching-strategy: ant_path_matcher
+  datasource:
+    primary:
+      type: com.alibaba.druid.pool.DruidDataSource
+      driver-class-name: org.sqlite.JDBC
+      url: jdbc:sqlite:D:\Program Files\JetBrains\project\heart\_202.spring_demo\db\primary.db
+    secondary:
+      type: com.alibaba.druid.pool.DruidDataSource
+      driver-class-name: org.sqlite.JDBC
+      url: jdbc:sqlite:D:\Program Files\JetBrains\project\heart\_202.spring_demo\db\secondary.db
+      # url: jdbc:mysql://localhost:3306/secondary_db
+      # username: root
+      # password: password
+      # driver-class-name: com.mysql.cj.jdbc.Driver
+  # SQLite 不是 Hibernate 默认支持自动检测的数据库之一
+  jpa:
+    database-platform: com.heart.dialect.CustomSQLiteDialect
+    hibernate:
+      use-new-id-generator-mappings: false
+    show-sql: true
+    generate-ddl: false
+    open-in-view: false

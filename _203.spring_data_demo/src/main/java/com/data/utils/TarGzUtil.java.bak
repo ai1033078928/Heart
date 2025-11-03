@@ -1,0 +1,288 @@
+package com.data.utils;
+
+import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
+import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
+import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
+
+import java.io.*;
+import java.nio.charset.Charset;
+import java.nio.file.*;
+import java.nio.file.attribute.FileTime;
+import java.nio.file.attribute.PosixFilePermission;
+import java.util.*;
+import java.util.function.Predicate;
+
+/**
+ * TarGzUtils 工具类
+ * ------------------
+ * 用于读取、解析、解压 .tar.gz 文件的通用工具类。
+ * 基于 Apache Commons Compress 实现，支持大文件流式读取。
+ *
+ * 主要功能：
+ *  1. 列出 tar.gz 中所有条目（文件、目录）
+ *  2. 解压全部或部分条目
+ *  3. 读取指定文件为字节数组或字符串
+ *  4. 提供进度回调接口
+ *  5. 自动防止路径穿越（Zip Slip）
+ *  6. 可选保留文件权限、修改时间
+ *
+ * 注意：
+ *  - 此类为静态工具类，无需实例化。
+ *  - 对于非 UTF-8 编码的 tar 文件，请自行调整 TarArchiveInputStream 的编码。
+ */
+public final class TarGzUtil {
+
+    /** 默认缓冲区大小（8KB） */
+    private static final int BUFFER_SIZE = 8192;
+
+    private TarGzUtil() {
+        // 工具类，禁止实例化
+    }
+
+    /**
+     * 进度回调接口
+     * 可用于显示解压或读取进度。
+     */
+    public interface ProgressListener {
+        /** 开始处理某个条目 */
+        void onStart(String entryName, long entrySize);
+
+        /** 处理过程中回调 */
+        void onProgress(String entryName, long processedBytes);
+
+        /** 处理完成 */
+        void onComplete(String entryName);
+    }
+
+    // ====================================================
+    // 一、列出 tar.gz 中的所有条目
+    // ====================================================
+
+    /**
+     * 列出 tar.gz 文件中所有条目（包括目录与文件）
+     *
+     * @param tarGzPath tar.gz 文件路径
+     * @return 所有条目的名称列表
+     * @throws IOException 读取异常
+     */
+    public static List<String> listEntries(Path tarGzPath) throws IOException {
+        List<String> result = new ArrayList<>();
+
+        try (InputStream fis = Files.newInputStream(tarGzPath);
+             BufferedInputStream bis = new BufferedInputStream(fis);
+             GzipCompressorInputStream gzipIn = new GzipCompressorInputStream(bis);
+             TarArchiveInputStream tarIn = new TarArchiveInputStream(gzipIn)) {
+
+            TarArchiveEntry entry;
+            while ((entry = tarIn.getNextTarEntry()) != null) {
+                result.add(entry.getName());
+            }
+        }
+
+        return result;
+    }
+
+    // ====================================================
+    // 二、解压 tar.gz 文件
+    // ====================================================
+
+    /**
+     * 解压整个 tar.gz 文件到目标目录
+     *
+     * @param tarGzPath  tar.gz 文件路径
+     * @param destDir    目标目录（不存在会自动创建）
+     * @throws IOException IO 异常
+     */
+    public static void extractAll(Path tarGzPath, Path destDir) throws IOException {
+        extractAll(tarGzPath, destDir, name -> true, null);
+    }
+
+    /**
+     * 解压 tar.gz 文件到目标目录（支持过滤与进度回调）
+     *
+     * @param tarGzPath  tar.gz 文件路径
+     * @param destDir    目标目录
+     * @param filter     条目过滤器（返回 true 表示解压该文件）
+     * @param listener   可选进度监听器（可为 null）
+     * @throws IOException IO 异常
+     */
+    public static void extractAll(Path tarGzPath,
+                                  Path destDir,
+                                  Predicate<String> filter,
+                                  ProgressListener listener) throws IOException {
+
+        Objects.requireNonNull(tarGzPath, "tarGzPath不能为空");
+        Objects.requireNonNull(destDir, "destDir不能为空");
+
+        if (!Files.exists(destDir)) {
+            Files.createDirectories(destDir);
+        }
+
+        try (InputStream fis = Files.newInputStream(tarGzPath);
+             BufferedInputStream bis = new BufferedInputStream(fis);
+             GzipCompressorInputStream gzipIn = new GzipCompressorInputStream(bis);
+             TarArchiveInputStream tarIn = new TarArchiveInputStream(gzipIn)) {
+
+            TarArchiveEntry entry;
+            byte[] buffer = new byte[BUFFER_SIZE];
+
+            while ((entry = tarIn.getNextTarEntry()) != null) {
+                String entryName = entry.getName();
+
+                if (filter != null && !filter.test(entryName)) {
+                    continue; // 跳过不符合过滤条件的文件
+                }
+
+                Path targetPath = destDir.resolve(entryName).normalize();
+
+                // 安全检查：防止路径穿越攻击（Zip Slip）
+                if (!targetPath.startsWith(destDir.normalize())) {
+                    throw new IOException("非法路径：" + entryName);
+                }
+
+                if (entry.isDirectory()) {
+                    Files.createDirectories(targetPath);
+                    continue;
+                }
+
+                // 创建父目录
+                Files.createDirectories(targetPath.getParent());
+
+                if (listener != null) listener.onStart(entryName, entry.getSize());
+
+                try (OutputStream out = Files.newOutputStream(targetPath)) {
+                    long total = 0;
+                    int len;
+                    while ((len = tarIn.read(buffer)) != -1) {
+                        out.write(buffer, 0, len);
+                        total += len;
+                        if (listener != null) listener.onProgress(entryName, total);
+                    }
+                }
+
+                // 设置修改时间
+                if (entry.getModTime() != null) {
+                    Files.setLastModifiedTime(targetPath, FileTime.fromMillis(entry.getModTime().getTime()));
+                }
+
+                // 尝试恢复POSIX文件权限（如果系统支持）
+                try {
+                    if (Files.getFileStore(targetPath).supportsFileAttributeView("posix")) {
+                        Set<PosixFilePermission> perms = modeToPosix(entry.getMode());
+                        Files.setPosixFilePermissions(targetPath, perms);
+                    }
+                } catch (Exception ignore) {}
+
+                if (listener != null) listener.onComplete(entryName);
+            }
+        }
+    }
+
+    // ====================================================
+    // 三、读取单个文件内容
+    // ====================================================
+
+    /**
+     * 读取 tar.gz 内指定文件为字节数组
+     *
+     * @param tarGzPath tar.gz 文件路径
+     * @param entryName 条目名称
+     * @return 文件内容的字节数组，未找到返回 null
+     * @throws IOException IO 异常
+     */
+    public static byte[] readEntryAsBytes(Path tarGzPath, String entryName) throws IOException {
+        try (InputStream fis = Files.newInputStream(tarGzPath);
+             BufferedInputStream bis = new BufferedInputStream(fis);
+             GzipCompressorInputStream gzipIn = new GzipCompressorInputStream(bis);
+             TarArchiveInputStream tarIn = new TarArchiveInputStream(gzipIn);
+             ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+
+            TarArchiveEntry entry;
+            byte[] buffer = new byte[BUFFER_SIZE];
+
+            while ((entry = tarIn.getNextTarEntry()) != null) {
+                if (entry.getName().equals(entryName)) {
+                    int len;
+                    while ((len = tarIn.read(buffer)) != -1) {
+                        baos.write(buffer, 0, len);
+                    }
+                    return baos.toByteArray();
+                }
+            }
+            return null;
+        }
+    }
+
+    /**
+     * 读取 tar.gz 内指定文件为字符串
+     *
+     * @param tarGzPath tar.gz 文件路径
+     * @param entryName 条目名称
+     * @param charset   字符编码
+     * @return 文件内容字符串，未找到返回 null
+     * @throws IOException IO 异常
+     */
+    public static String readEntryAsString(Path tarGzPath, String entryName, Charset charset) throws IOException {
+        byte[] bytes = readEntryAsBytes(tarGzPath, entryName);
+        return bytes == null ? null : new String(bytes, charset);
+    }
+
+    // ====================================================
+    // 四、辅助方法
+    // ====================================================
+
+    /** 将 UNIX 文件模式转换为 POSIX 文件权限 */
+    private static Set<PosixFilePermission> modeToPosix(int mode) {
+        Set<PosixFilePermission> perms = new HashSet<>();
+
+        if ((mode & 0400) != 0) perms.add(PosixFilePermission.OWNER_READ);
+        if ((mode & 0200) != 0) perms.add(PosixFilePermission.OWNER_WRITE);
+        if ((mode & 0100) != 0) perms.add(PosixFilePermission.OWNER_EXECUTE);
+
+        if ((mode & 0040) != 0) perms.add(PosixFilePermission.GROUP_READ);
+        if ((mode & 0020) != 0) perms.add(PosixFilePermission.GROUP_WRITE);
+        if ((mode & 0010) != 0) perms.add(PosixFilePermission.GROUP_EXECUTE);
+
+        if ((mode & 0004) != 0) perms.add(PosixFilePermission.OTHERS_READ);
+        if ((mode & 0002) != 0) perms.add(PosixFilePermission.OTHERS_WRITE);
+        if ((mode & 0001) != 0) perms.add(PosixFilePermission.OTHERS_EXECUTE);
+
+        return perms;
+    }
+
+    // ====================================================
+    // 五、示例主函数（测试用）
+    // ====================================================
+
+    public static void main(String[] args) {
+        if (args.length < 2) {
+            System.out.println("使用示例：java TarGzUtils <tar.gz路径> <目标目录>");
+            return;
+        }
+
+        Path tarGz = Paths.get(args[0]);
+        Path dest = Paths.get(args[1]);
+
+        try {
+            extractAll(tarGz, dest, name -> true, new ProgressListener() {
+                @Override
+                public void onStart(String entryName, long entrySize) {
+                    System.out.printf("开始解压：%s (%d字节)%n", entryName, entrySize);
+                }
+
+                @Override
+                public void onProgress(String entryName, long processedBytes) {
+                    // 可在此打印实时进度
+                }
+
+                @Override
+                public void onComplete(String entryName) {
+                    System.out.printf("完成：%s%n", entryName);
+                }
+            });
+            System.out.println("✅ 全部解压完成！");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+}
