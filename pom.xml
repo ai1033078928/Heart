@@ -26,6 +26,7 @@
         <module>_104.databases_utils</module>
         <module>_201.zip2db</module>
         <module>_202.spring_demo</module>
+        <module>_203.spring_data_demo</module>
         <module>_302.cdc-lab</module>
         <module>_303.hive_functions</module>
         <module>_304.flink_demo</module>
@@ -51,6 +52,7 @@
 
         <apache.lang3>3.1</apache.lang3>
         <apache.io>2.11.0</apache.io>
+        <apache.commons.net>3.6</apache.commons.net>
         <apache.compress>1.26.0</apache.compress>
         <apache.csv>1.9.0</apache.csv>
         <apache.commons.cli>1.5.0</apache.commons.cli>

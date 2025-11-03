@@ -1,8 +1,6 @@
 package com.heart.controller;
 
 
-import com.heart.annotation.DataSourceSwitcher;
-import com.heart.datasource.DataSourceType;
 import com.heart.entity.User;
 import com.heart.service.UserService;
 import io.swagger.annotations.Api;

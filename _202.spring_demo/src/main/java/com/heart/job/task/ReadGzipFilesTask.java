@@ -1,6 +1,7 @@
 package com.heart.job.task;
 
-import com.alibaba.druid.pool.DruidDataSource;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.heart.datasource.DynamicDataSource;
 import com.heart.utils.ApacheFileUtil;
 import com.heart.utils.SpringUtils;
@@ -17,10 +18,7 @@ import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.CountDownLatch;
 
 public class ReadGzipFilesTask implements Runnable {
@@ -28,16 +26,22 @@ public class ReadGzipFilesTask implements Runnable {
     // 获取 Logger 实例
     private static final Logger logger = LoggerFactory.getLogger(ReadGzipFilesTask.class);
 
-    private String tableName;
-    private String tableCols;
-    private String tableColsType;
+    private String tableName;  // 库表名
+    private String tableCols;  // 文件字段名
+    private String[] tableColsArr;  // 文件字段名
+    private String needCols;  // 入库字段名
+    private String[] needColsArr;  // 入库字段名
+    private String tableColsType;  // 字段类型Json串
+    private Map tableColsTypeMap;  // 字段类型Map
+    private String tablePK;   // 主键字段
+    private String tableNotNullCols;  // 非空字段
     private String filesPath;
     private List<String> allFiles;
     private List<String> allDirFiles = new ArrayList<>();
     private boolean isCompress = true;
-    private Long lineNum;
+    private Long lineNum = 0L;
     private Connection conn;
-    private String separator = "\\u0001";
+    private Character separator = '\u0001';
     // private Map<String, List<String>> filesMap;
     private boolean isInitSucc = true;
 
@@ -53,10 +57,25 @@ public class ReadGzipFilesTask implements Runnable {
     }
 
 
-    public ReadGzipFilesTask(String tableName, String tableCols, String filesPath) {
+    public ReadGzipFilesTask(String tableName, String tableCols, String needCols, String filesPath) {
         this.tableName = tableName;
         this.tableCols = tableCols;
+        this.tableColsArr = Arrays.stream(tableCols.split(",")).map(String::trim).toArray(String[]::new);
+        this.needCols = needCols;
+        this.needColsArr = Arrays.stream(needCols.split(",")).map(String::trim).toArray(String[]::new);
         this.filesPath = filesPath;
+
+        // 对象转JSON
+        ObjectMapper objectMapper = new ObjectMapper();
+        String jsonString = null;
+        try {
+            jsonString = objectMapper.writeValueAsString(this.tableColsType);
+            this.tableColsTypeMap = objectMapper.readValue(jsonString, Map.class);
+        } catch (JsonProcessingException e) {
+            System.out.println("表结构 json 解析异常");
+            throw new RuntimeException(e);
+        }
+
         this.initFiles();
         this.initDbConn();
     }
@@ -176,6 +195,7 @@ public class ReadGzipFilesTask implements Runnable {
             e.printStackTrace();
             // throw new RuntimeException(e);
         }
+        countDownLatch.countDown();
     }
 
     private void parseIncFile(List<Map<String, String>> dirFile) {
@@ -228,11 +248,13 @@ public class ReadGzipFilesTask implements Runnable {
      * @param tarGzFilePath
      */
     public void readAllFileTarGz(String tarGzFilePath) {
+        String insertSQL = buildInsertSQL(this.needColsArr);
         BufferedReader reader = null;
         try (FileInputStream fis = new FileInputStream(tarGzFilePath);
              GzipCompressorInputStream gzis = new GzipCompressorInputStream(fis);
-             TarArchiveInputStream tais = new TarArchiveInputStream(gzis)) {
-
+             TarArchiveInputStream tais = new TarArchiveInputStream(gzis);
+             PreparedStatement preparedStatement = this.conn.prepareStatement(insertSQL)
+        ) {
             TarArchiveEntry entry;
             while ((entry = tais.getNextEntry()) != null) {
                 if (!entry.isDirectory()) {
@@ -241,12 +263,26 @@ public class ReadGzipFilesTask implements Runnable {
                     reader = new BufferedReader(new InputStreamReader(tais, StandardCharsets.UTF_8));
                     String line;
                     this.lineNum = 0L;
+                    StringBuilder strLineData = new StringBuilder();
                     while ((line = reader.readLine()) != null) {
-                        processDataLine(line);
+                        strLineData.append(line);
+                        Integer count = getSeparatorCharCount(strLineData);
+                        if (count == this.tableColsTypeMap.size()) {
+                            processDataLine(strLineData.toString(), preparedStatement);
+                            strLineData.setLength(0);
+                        } else if (count < this.tableColsTypeMap.size()) {
+                            continue;
+                        } else {
+                            System.out.println("单行分隔符过多，错误！！！");
+                        }
+                        if (this.lineNum % 5000 == 0) {
+                            preparedStatement.executeUpdate();   // 5000条一批次提交
+                        }
                     }
+                    preparedStatement.executeUpdate();  // 最后批次提交
                 }
             }
-        } catch (IOException e) {
+        } catch (IOException | SQLException e) {
             e.printStackTrace();
         } finally {
             if (null != reader) {
@@ -260,6 +296,17 @@ public class ReadGzipFilesTask implements Runnable {
         }
     }
 
+    private Integer getSeparatorCharCount(StringBuilder stringBuilder) {
+        // 统计特定字符 \u0001 的数量
+        int count = 0;
+        for (int i = 0; i < stringBuilder.length(); i++) {
+            if (stringBuilder.charAt(i) == this.separator) {
+                count++;
+            }
+        }
+        return count;
+    }
+
 
     /**
      * 从 tar.gz 中读取指定文件
@@ -267,10 +314,12 @@ public class ReadGzipFilesTask implements Runnable {
      * @param targetFileName
      */
     public void readSpecificFileFromTarGz(String tarGzFilePath, String targetFileName) {
+        String insertSQL = buildInsertSQL(this.needColsArr);
         try (FileInputStream fis = new FileInputStream(tarGzFilePath);
              GzipCompressorInputStream gzis = new GzipCompressorInputStream(fis);
-             TarArchiveInputStream tais = new TarArchiveInputStream(gzis)) {
-
+             TarArchiveInputStream tais = new TarArchiveInputStream(gzis);
+             PreparedStatement preparedStatement = this.conn.prepareStatement(insertSQL)
+        ) {
             TarArchiveEntry entry;
             while ((entry = tais.getNextEntry()) != null) {
                 if (!entry.isDirectory() && entry.getName().equals(targetFileName)) {
@@ -281,14 +330,14 @@ public class ReadGzipFilesTask implements Runnable {
                         String line;
                         this.lineNum = 0L;
                         while ((line = reader.readLine()) != null) {
-                           processDataLine(line);
+                           processDataLine(line, preparedStatement);
                         }
                     }
                     return; // 找到并处理完目标文件后退出
                 }
             }
             System.out.println("File not found: " + targetFileName);
-        } catch (IOException e) {
+        } catch (IOException | SQLException e) {
             e.printStackTrace();
         }
     }
@@ -324,9 +373,124 @@ public class ReadGzipFilesTask implements Runnable {
     }
 
 
-    private void processDataLine(String line) {
-        // 处理单行数据
-        System.out.println(line);
+    private void processDataLine(String line, PreparedStatement pstmt) {
+        // 处理单行数据 - 实现数据解析和插入逻辑
+        // 按分隔符切分字段值
+        Map<String, String> dataLineMap = new HashMap();
+        String[] data = line.split(String.valueOf(separator));
+        for (int i = 0; i < data.length; i++) {
+            dataLineMap.put(this.tableColsArr[i], data[i]);
+        }
+
+        // TODO：进行数据校验
+        // 执行插入操作
+        try {
+            for (int i = 0; i < needColsArr.length; i++) {
+                String columnName = needColsArr[i];
+                String columnValue = dataLineMap.get(columnName);
+                pstmt.setString(i + 1, columnValue);
+            }
+            pstmt.addBatch();
+            this.lineNum++;
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+
+    private boolean validateData(String[] fieldValues, String[] columnNames) {
+        // 解析元数据
+        String[] pkColumns = this.tablePK.split(",");
+        String[] notNullColumns = this.tableNotNullCols.split(",");
+
+        // 校验非空字段
+        for (String notNullCol : notNullColumns) {
+            int index = getColumnIndex(notNullCol, columnNames);
+            if (index != -1 && (fieldValues[index] == null || fieldValues[index].isEmpty())) {
+                logger.error("非空字段 {} 为空", notNullCol);
+                return false;
+            }
+        }
+
+        // 校验主键字段不为空
+        for (String pkCol : pkColumns) {
+            int index = getColumnIndex(pkCol, columnNames);
+            if (index != -1 && (fieldValues[index] == null || fieldValues[index].isEmpty())) {
+                logger.error("主键字段 {} 为空", pkCol);
+                return false;
+            }
+        }
+
+        // 校验字段长度（需要解析tableColsType）
+        // 这里需要根据实际的tableColsType JSON结构进行解析
+        // 例如：{"col1":"VARCHAR(50)","col2":"NUMBER(10)"}
+
+        return true;
+    }
+
+    private int getColumnIndex(String columnName, String[] columnNames) {
+        for (int i = 0; i < columnNames.length; i++) {
+            if (columnNames[i].equals(columnName)) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    private String buildInsertSQL(String[] columnNames) {
+        StringBuilder sql = new StringBuilder();
+        sql.append("INSERT INTO ").append(this.tableName).append(" (");
+
+        for (int i = 0; i < columnNames.length; i++) {
+            sql.append(columnNames[i]);
+            if (i < columnNames.length - 1) {
+                sql.append(",");
+            }
+        }
+
+        sql.append(") VALUES (");
+        for (int i = 0; i < columnNames.length; i++) {
+            sql.append("?");
+            if (i < columnNames.length - 1) {
+                sql.append(",");
+            }
+        }
+        sql.append(")");
+
+        return sql.toString();
+    }
+
+    private void processDelDataLine(String line) {
+        // 处理删除数据行 - 根据主键删除数据
+        try {
+            String[] fieldValues = line.split(String.valueOf(this.separator));
+            String[] columnNames = this.tableCols.split(",");
+            String[] pkColumns = this.tablePK.split(",");
+
+            // 构建删除SQL
+            StringBuilder sql = new StringBuilder();
+            sql.append("DELETE FROM ").append(this.tableName).append(" WHERE ");
+
+            for (int i = 0; i < pkColumns.length; i++) {
+                sql.append(pkColumns[i]).append(" = ?");
+                if (i < pkColumns.length - 1) {
+                    sql.append(" AND ");
+                }
+            }
+
+            try (PreparedStatement pstmt = this.conn.prepareStatement(sql.toString())) {
+                for (int i = 0; i < pkColumns.length; i++) {
+                    int index = getColumnIndex(pkColumns[i], columnNames);
+                    if (index != -1) {
+                        pstmt.setString(i + 1, fieldValues[index]);
+                    }
+                }
+                pstmt.executeUpdate();
+            }
+
+        } catch (Exception e) {
+            logger.error("处理删除数据行异常: " + line, e);
+        }
     }
 
     private void processDdlLines(List<String> lines) {

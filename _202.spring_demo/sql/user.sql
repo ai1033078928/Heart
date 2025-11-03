@@ -1,3 +1,5 @@
+-- create schema test;
+
 create table user(
                      id long primary key ,
                      name varchar(200),

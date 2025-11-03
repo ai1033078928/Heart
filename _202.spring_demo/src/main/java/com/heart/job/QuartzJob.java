@@ -1,9 +1,9 @@
 package com.heart.job;
 
-import com.heart.entity.HeartJobInfoEntity;
 import com.heart.job.task.ReadDataFileTask;
-import com.heart.job.task.ReadGzipFilesTask;
 import com.heart.service.HeartJobInfoService;
+import com.heart.entity.HeartJobInfoEntity;
+import com.heart.job.task.ReadGzipFilesTask;
 import org.quartz.Job;
 import org.quartz.JobDataMap;
 import org.quartz.JobExecutionContext;
@@ -75,7 +75,7 @@ public class QuartzJob implements Job {
         List<ReadGzipFilesTask> tasks = new ArrayList<>();
 
         for (HeartJobInfoEntity jobInfo : jobInfos) {
-            ReadGzipFilesTask task = new ReadGzipFilesTask("", "", "");
+            ReadGzipFilesTask task = new ReadGzipFilesTask("", "","", "");
             task.setCountDownLatch(countDownLatch);
 
             tasks.add(task);
