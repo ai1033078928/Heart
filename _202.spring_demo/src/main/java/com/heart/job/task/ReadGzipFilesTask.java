@@ -39,11 +39,12 @@ public class ReadGzipFilesTask implements Runnable {
     private List<String> allFiles;
     private List<String> allDirFiles = new ArrayList<>();
     private boolean isCompress = true;
-    private Long lineNum = 0L;
+    private Long lineNum = 1L;
     private Connection conn;
     private Character separator = '\u0001';
     // private Map<String, List<String>> filesMap;
     private boolean isInitSucc = true;
+    private Integer batchDataNum = 5000;
 
 
     CountDownLatch countDownLatch;
@@ -217,6 +218,7 @@ public class ReadGzipFilesTask implements Runnable {
 
         String gzipFileName = dirFile.get(0).get("dirFileName").substring(4) + ".dat.tar.gz";
         if (isCompress) {
+            // 先处理 del 数据，再处理增量数据
             delFiles.forEach(file -> this.readSpecificFileFromTarGz(gzipFileName, file));  // 执行delete数据
             incFiles.forEach(file -> this.readSpecificFileFromTarGz(gzipFileName, file));  // 执行增量数据
         }
@@ -248,7 +250,7 @@ public class ReadGzipFilesTask implements Runnable {
      * @param tarGzFilePath
      */
     public void readAllFileTarGz(String tarGzFilePath) {
-        String insertSQL = buildInsertSQL(this.needColsArr);
+        String insertSQL = buildInsertSQL();
         BufferedReader reader = null;
         try (FileInputStream fis = new FileInputStream(tarGzFilePath);
              GzipCompressorInputStream gzis = new GzipCompressorInputStream(fis);
@@ -314,32 +316,94 @@ public class ReadGzipFilesTask implements Runnable {
      * @param targetFileName
      */
     public void readSpecificFileFromTarGz(String tarGzFilePath, String targetFileName) {
-        String insertSQL = buildInsertSQL(this.needColsArr);
+        String insertSQL = buildInsertSQL();
+        String delSQL = buildDelSQL();
+        BufferedReader reader = null;
         try (FileInputStream fis = new FileInputStream(tarGzFilePath);
              GzipCompressorInputStream gzis = new GzipCompressorInputStream(fis);
              TarArchiveInputStream tais = new TarArchiveInputStream(gzis);
-             PreparedStatement preparedStatement = this.conn.prepareStatement(insertSQL)
+             PreparedStatement delStmt = this.conn.prepareStatement(insertSQL);
+             PreparedStatement insStmt = this.conn.prepareStatement(delSQL);
         ) {
             TarArchiveEntry entry;
             while ((entry = tais.getNextEntry()) != null) {
                 if (!entry.isDirectory() && entry.getName().equals(targetFileName)) {
-                    System.out.println("Found and reading file: " + entry.getName());
-                    // 处理找到的文件
-                    try (BufferedReader reader = new BufferedReader(
-                            new InputStreamReader(tais, StandardCharsets.UTF_8))) {
-                        String line;
-                        this.lineNum = 0L;
-                        while ((line = reader.readLine()) != null) {
-                           processDataLine(line, preparedStatement);
+                    // 处理单个文件
+                    reader = new BufferedReader(new InputStreamReader(tais, StandardCharsets.UTF_8));
+                    boolean isDelFile = targetFileName.endsWith(".i.del.dat");
+                    String line;
+                    lineNum = 1L;
+                    StringBuilder strLineData = new StringBuilder();
+                    Map<String, String> dataLine = new HashMap<>(needColsArr.length + 1);
+                    List<String> fileHeadCols = null;
+                    while ((line = reader.readLine()) != null) {
+                        if (lineNum == 1L) {
+                            // 初始化数据文件中表头
+                            fileHeadCols = Arrays.asList(line.split(String.valueOf(separator)));
+                            if (fileHeadCols.isEmpty()) {
+                                logger.error("数据文件中表头错误，跳过文件");
+                                return;
+                            }
+                        } else {
+                            strLineData.append(line);
+                            // 组装数据为 Map
+                            assert fileHeadCols != null;
+                            Integer count = getDataCols(strLineData.toString(), fileHeadCols, dataLine);
+                            if (count == fileHeadCols.size()) {
+                                processDataLine(dataLine, tablePK.split(String.valueOf(separator)), delStmt);
+                                if (!isDelFile) {
+                                    processDataLine(dataLine, needColsArr, insStmt);
+                                }
+                                lineNum++;
+                                strLineData.setLength(0);
+                                dataLine.clear();
+                            } else if (count < fileHeadCols.size()) {
+                                continue;
+                            } else {
+                                logger.error("单行数据分隔符过多，错误！！！");
+                            }
+                            if (lineNum % this.batchDataNum == 0) {
+                                delStmt.executeUpdate();   // 批次提交
+                                insStmt.executeUpdate();
+                            }
                         }
                     }
+                    delStmt.executeUpdate();  // 最后批次提交
+                    insStmt.executeUpdate();
                     return; // 找到并处理完目标文件后退出
                 }
             }
-            System.out.println("File not found: " + targetFileName);
         } catch (IOException | SQLException e) {
             e.printStackTrace();
+        } finally {
+            if (null != reader) {
+                try {
+                    reader.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    // throw new RuntimeException(e);
+                }
+            }
         }
+    }
+
+    /**
+     * 组装数据文件map
+     * @param str
+     * @param fileHeadCols
+     * @param data
+     * @return
+     */
+    private Integer getDataCols(String str, List<String> fileHeadCols, Map<String, String> data) {
+        String[] dataArr = str.split(String.valueOf(this.separator));
+
+        if (dataArr.length == fileHeadCols.size()) {
+            for (int i = 0; i < fileHeadCols.size(); i++) {
+                data.put(fileHeadCols.get(i), dataArr[i]);
+            }
+        }
+
+        return dataArr.length;
     }
 
 
@@ -393,7 +457,9 @@ public class ReadGzipFilesTask implements Runnable {
             pstmt.addBatch();
             this.lineNum++;
         } catch (SQLException e) {
-            throw new RuntimeException(e);
+            logger.error("数据插入单行提交异常");
+            e.printStackTrace();
+            // throw new RuntimeException(e);
         }
     }
 
@@ -437,21 +503,21 @@ public class ReadGzipFilesTask implements Runnable {
         return -1;
     }
 
-    private String buildInsertSQL(String[] columnNames) {
+    private String buildInsertSQL() {
         StringBuilder sql = new StringBuilder();
         sql.append("INSERT INTO ").append(this.tableName).append(" (");
 
-        for (int i = 0; i < columnNames.length; i++) {
-            sql.append(columnNames[i]);
-            if (i < columnNames.length - 1) {
+        for (int i = 0; i < this.needColsArr.length; i++) {
+            sql.append(this.needColsArr[i]);
+            if (i < this.needColsArr.length - 1) {
                 sql.append(",");
             }
         }
 
         sql.append(") VALUES (");
-        for (int i = 0; i < columnNames.length; i++) {
+        for (int i = 0; i < this.needColsArr.length; i++) {
             sql.append("?");
-            if (i < columnNames.length - 1) {
+            if (i < this.needColsArr.length - 1) {
                 sql.append(",");
             }
         }
@@ -460,36 +526,33 @@ public class ReadGzipFilesTask implements Runnable {
         return sql.toString();
     }
 
-    private void processDelDataLine(String line) {
-        // 处理删除数据行 - 根据主键删除数据
+    private String buildDelSQL() {
+        String[] pkColumns = this.tablePK.split(",");
+        // 构建删除SQL
+        StringBuilder sql = new StringBuilder();
+        sql.append("DELETE FROM ").append(this.tableName).append(" WHERE ");
+
+        for (int i = 0; i < pkColumns.length; i++) {
+            sql.append(pkColumns[i]).append(" = ?");
+            if (i < pkColumns.length - 1) {
+                sql.append(" AND ");
+            }
+        }
+
+        return sql.toString();
+    }
+
+    private void processDataLine(Map<String, String> data, String[] cols, PreparedStatement pstmt) {
+        // 处理单行数据
         try {
-            String[] fieldValues = line.split(String.valueOf(this.separator));
-            String[] columnNames = this.tableCols.split(",");
-            String[] pkColumns = this.tablePK.split(",");
-
-            // 构建删除SQL
-            StringBuilder sql = new StringBuilder();
-            sql.append("DELETE FROM ").append(this.tableName).append(" WHERE ");
-
-            for (int i = 0; i < pkColumns.length; i++) {
-                sql.append(pkColumns[i]).append(" = ?");
-                if (i < pkColumns.length - 1) {
-                    sql.append(" AND ");
-                }
+            for (int i = 0; i < cols.length; i++) {
+                String columnName = cols[i];
+                String colValue = data.get(columnName);
+                pstmt.setObject(i + 1, colValue);   // TODO：处理数据类型
             }
-
-            try (PreparedStatement pstmt = this.conn.prepareStatement(sql.toString())) {
-                for (int i = 0; i < pkColumns.length; i++) {
-                    int index = getColumnIndex(pkColumns[i], columnNames);
-                    if (index != -1) {
-                        pstmt.setString(i + 1, fieldValues[index]);
-                    }
-                }
-                pstmt.executeUpdate();
-            }
-
-        } catch (Exception e) {
-            logger.error("处理删除数据行异常: " + line, e);
+            pstmt.addBatch();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
         }
     }
 

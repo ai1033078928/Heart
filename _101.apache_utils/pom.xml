@@ -18,19 +18,19 @@
             <!-- 使用：https://www.pdai.tech/md/develop/package/dev-package-x-apache-common.html-->
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
-            <version>${apache.lang3}</version>
+            <version>${apache.commons.lang3}</version>
         </dependency>
 
         <dependency>
             <groupId>commons-io</groupId>
             <artifactId>commons-io</artifactId>
-            <version>${apache.io}</version>
+            <version>${apache.commons.io}</version>
         </dependency>
 
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-csv</artifactId>
-            <version>${apache.csv}</version>
+            <version>${apache.commons.csv}</version>
         </dependency>
 
         <dependency>
@@ -51,13 +51,13 @@
         <dependency>
             <groupId>org.apache.poi</groupId>
             <artifactId>poi</artifactId>
-            <version>${apache.poi}</version>
+            <version>${apache.commons.poi}</version>
         </dependency>
         <!--xlsx(07)-->
         <dependency>
             <groupId>org.apache.poi</groupId>
             <artifactId>poi-ooxml</artifactId>
-            <version>${apache.poi.ooxml}</version>
+            <version>${apache.commons.poi.ooxml}</version>
         </dependency>
 
         <dependency>

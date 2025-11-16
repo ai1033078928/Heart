@@ -59,11 +59,11 @@ public class QuartzConfig {
         JobDataMap jobDataMap = new JobDataMap(mapProperties);
         log.info("加载文件配置：{}", jobDataMap);
 
-        log.info("开始定义任务...");
+        log.info("开始定义任务2...");
         // 定义任务
         return JobBuilder.newJob(QuartzJob2.class)
-                .withDescription("任务描述")
-                .withIdentity("任务", "任务组1")
+                .withDescription("任务描述2")
+                .withIdentity("任务2", "任务组2")
                 .storeDurably()
                 .usingJobData(jobDataMap)
                 .build();
@@ -72,11 +72,11 @@ public class QuartzConfig {
     @Bean
     @Qualifier("jobTrigger2")
     public Trigger myJobTrigger2(@Qualifier("jobDetail2") JobDetail jobDetail2) {
-        log.info("开始定义触发器...");
+        log.info("开始定义触发器2...");
         // 定义触发器
         return TriggerBuilder.newTrigger()
                 .forJob(jobDetail2)
-                .withIdentity("触发器", "任务组1")
+                .withIdentity("触发器2", "任务组2")
                 .withSchedule(
                         SimpleScheduleBuilder.simpleSchedule()
                                 .withIntervalInSeconds(3) // 每x秒执行一次

@@ -4,6 +4,7 @@ import com.heart.job.task.ReadDataFileTask;
 import com.heart.service.HeartJobInfoService;
 import com.heart.entity.HeartJobInfoEntity;
 import com.heart.job.task.ReadGzipFilesTask;
+import lombok.extern.slf4j.Slf4j;
 import org.quartz.Job;
 import org.quartz.JobDataMap;
 import org.quartz.JobExecutionContext;
@@ -19,6 +20,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+@Slf4j
 public class QuartzJob implements Job {
 
     private static boolean isRunning = false;
@@ -29,7 +31,7 @@ public class QuartzJob implements Job {
     @Override
     public void execute(JobExecutionContext context) throws JobExecutionException {
         String curTime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date(System.currentTimeMillis()));
-        System.out.printf("[%s] 任务开始执行...%n", curTime);
+        log.info(String.format("[%s] 任务开始执行...%n", curTime));
 
         if (isRunning) return;
         isRunning = true;
@@ -40,7 +42,7 @@ public class QuartzJob implements Job {
         List<String> jobNames = Arrays.asList(jobName.split(","));
         List<HeartJobInfoEntity> jobInfos = heartJobInfoService.getJobInfoByServerName(jobNames);
 
-        System.out.println(String.format("任务数：%s", jobInfos.size()));
+        log.info(String.format("任务数：%s", jobInfos.size()));
         countDownLatch = new CountDownLatch(jobInfos.size());
         List<ReadGzipFilesTask> readDataFileTasks = getReadDataFileTasks(jobInfos);
 
@@ -54,6 +56,8 @@ public class QuartzJob implements Job {
             isRunning = false;
             e.printStackTrace();
             // throw new RuntimeException(e);
+        } finally {
+            executor.shutdown();
         }
 
     }

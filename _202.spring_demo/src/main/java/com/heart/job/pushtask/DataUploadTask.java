@@ -1,5 +1,6 @@
 package com.heart.job.pushtask;
 
+import com.heart.job.pushtask.UploadTask;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.concurrent.CountDownLatch;
@@ -21,7 +22,8 @@ public class DataUploadTask extends UploadTask implements Runnable {
         log.info("balabalabala...");
 
         try {
-            Thread.sleep(10);
+            Thread.sleep(10 * 1000L);
+            log.info("balabalabala...end");
         } catch (InterruptedException e) {
 
             // throw new RuntimeException(e);

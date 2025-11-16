@@ -10,8 +10,8 @@
     <artifactId>spring-data-jpa</artifactId>
 </dependency>
 <dependency>
-    <groupId>org.springframework.boot</groupId>
-    <artifactId>spring-boot-starter-data-jpa</artifactId>
+<groupId>org.springframework.boot</groupId>
+<artifactId>spring-boot-starter-data-jpa</artifactId>
 </dependency>
 ```
 
@@ -40,15 +40,15 @@ springboot默认是用logback的日志框架，需要去掉springboot默认配�
 </dependency>
 
 <dependency>
-    <groupId>org.springframework.boot</groupId>
-    <artifactId>spring-boot-starter</artifactId>
-    <exclusions>
-        <!-- springboot默认是用logback的日志框架，去掉springboot默认配置 -->
-        <exclusion>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-logging</artifactId>
-        </exclusion>
-    </exclusions>
+<groupId>org.springframework.boot</groupId>
+<artifactId>spring-boot-starter</artifactId>
+<exclusions>
+    <!-- springboot默认是用logback的日志框架，去掉springboot默认配置 -->
+    <exclusion>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-logging</artifactId>
+    </exclusion>
+</exclusions>
 </dependency>
 ```
 
@@ -88,14 +88,14 @@ swagger用于自动生成接口文档，knife4j增强其UI功能
     <version>${swagger.version}</version>
 </dependency>
 <dependency>
-    <groupId>io.springfox</groupId>
-    <artifactId>springfox-swagger-ui</artifactId>
-    <version>${swagger.version}</version>
+<groupId>io.springfox</groupId>
+<artifactId>springfox-swagger-ui</artifactId>
+<version>${swagger.version}</version>
 </dependency>
 <dependency>
-    <groupId>com.github.xiaoymin</groupId>
-    <artifactId>knife4j-spring-boot-starter</artifactId>
-    <version>3.0.3</version>
+<groupId>com.github.xiaoymin</groupId>
+<artifactId>knife4j-spring-boot-starter</artifactId>
+<version>3.0.3</version>
 </dependency>
 ```
 
@@ -153,8 +153,8 @@ swagger用于自动生成接口文档，knife4j增强其UI功能
     <artifactId>spring-aop</artifactId>
 </dependency>
 <dependency>
-    <groupId>org.springframework</groupId>
-    <artifactId>spring-aspects</artifactId>
+<groupId>org.springframework</groupId>
+<artifactId>spring-aspects</artifactId>
 </dependency>
 ```
 
@@ -169,3 +169,9 @@ swagger用于自动生成接口文档，knife4j增强其UI功能
     <version>${apache.lang3}</version>
 </dependency>
 ```
+
+
+#### web 页面
+
+- druid监控：http://localhost:8081/druid
+- H2控制台：http://localhost:8081/h2-console

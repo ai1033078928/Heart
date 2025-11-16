@@ -50,14 +50,16 @@
 
         <google.guava>20.0</google.guava>
 
-        <apache.lang3>3.1</apache.lang3>
-        <apache.io>2.11.0</apache.io>
-        <apache.commons.net>3.6</apache.commons.net>
-        <apache.compress>1.26.0</apache.compress>
-        <apache.csv>1.9.0</apache.csv>
-        <apache.commons.cli>1.5.0</apache.commons.cli>
-        <apache.poi>5.2.2</apache.poi>  <!--xls(03)-->
-        <apache.poi.ooxml>5.2.2</apache.poi.ooxml>  <!--xlsx(07)-->
+        <!-- https://commons.apache.org/ -->
+        <apache.commons.cli>1.10.0</apache.commons.cli>
+        <apache.commons.collections>3.2.2</apache.commons.collections> <!-- 旧版本 -->
+        <apache.commons.compress>1.28.0</apache.commons.compress>
+        <apache.commons.csv>1.9.0</apache.commons.csv>
+        <apache.commons.io>2.21.0</apache.commons.io>
+        <apache.commons.lang3>3.19.0</apache.commons.lang3>
+        <apache.commons.net>3.12.0</apache.commons.net>
+        <apache.commons.poi>5.2.2</apache.commons.poi>  <!--xls(03)-->
+        <apache.commons.poi.ooxml>5.2.2</apache.commons.poi.ooxml>  <!--xlsx(07)-->
 
         <hutool.version>5.8.23</hutool.version>
         <mail.version>1.6.2</mail.version>
