@@ -1,0 +1,44 @@
+logging:
+  config: classpath:log4j2-spring-dev.xml  # 默认名为 log4j2-spring.xml，则不需要配置
+  level:
+    cn.jay.repository: trace
+
+# 启动报错需要修改以下mvc配置 Failed to start bean 'documentationPluginsBootstrapper'
+#  Springfox使用的路径匹配是基于AntPathMatcher的，而Spring Boot 2.6.X使用的是PathPatternMatcher。
+spring:
+  mvc:
+    pathmatch:
+      matching-strategy: ant_path_matcher
+  datasource:
+    dynamic:
+      primary: master # 设置主数据源名称
+      strict: false  # 添加此项避免严格模式下的初始化问题
+      datasource:
+        master:
+          type: com.alibaba.druid.pool.DruidDataSource
+          driver-class-name: org.h2.Driver
+          url: jdbc:h2:tcp://localhost/D:\Program Files\JetBrains\project\heart\_203.spring_data_demo\db\h2\data\db1;MODE=MySQL;SCHEMA=swap;DATABASE_TO_LOWER=TRUE;CASE_INSENSITIVE_IDENTIFIERS=TRUE
+          username: banana
+          password: banana
+        secondary:
+          type: com.alibaba.druid.pool.DruidDataSource
+          driver-class-name: org.h2.Driver
+          url: jdbc:h2:tcp://localhost/D:\Program Files\JetBrains\project\heart\_203.spring_data_demo\db\h2\data\db2;MODE=MySQL;SCHEMA=test;DATABASE_TO_LOWER=TRUE;CASE_INSENSITIVE_IDENTIFIERS=TRUE
+          username: banana
+          password: banana
+#  jpa:
+#    database-platform: org.hibernate.dialect.H2Dialect
+#    hibernate:
+#      use-new-id-generator-mappings: false
+#    show-sql: true
+#    generate-ddl: false
+#    open-in-view: false
+  h2:
+    console:
+      enabled: true # 启用控制台
+
+ftp:
+  host:8.8.8.10
+  port:60021
+  name:ftpuser
+  password:banana

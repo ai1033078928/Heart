@@ -19,10 +19,14 @@ public class CustomProperties {
     @Value("${job.jobName}")
     private String jobName;
 
+    @Value("${job.timeInterval}")
+    private String timeInterval;
+
     public Map<String, String> getMapProperties() {
         Map<String, String> hashMap = new HashMap<>();
         hashMap.put("filePath", this.filePath);
         hashMap.put("jobName", this.jobName);
+        hashMap.put("timeInterval", this.timeInterval);
         return hashMap;
     }
 

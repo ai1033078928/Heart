@@ -1,11 +1,11 @@
 package com.heart;
 
-import com.heart.datasource.DynamicDataSourceRegister;
+import com.heart.config.FtpProperties;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.annotation.Import;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 
-@Import({DynamicDataSourceRegister.class})
+@EnableConfigurationProperties({FtpProperties.class})
 @SpringBootApplication
 public class Application {
 

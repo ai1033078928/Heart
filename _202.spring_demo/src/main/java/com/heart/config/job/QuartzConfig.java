@@ -1,7 +1,6 @@
 package com.heart.config.job;
 
 import com.heart.job.QuartzJob2;
-import com.heart.job.QuartzJob;
 import lombok.extern.slf4j.Slf4j;
 import org.quartz.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,7 +17,7 @@ public class QuartzConfig {
     @Autowired
     CustomProperties customProperties;
 
-    @Bean
+    /*@Bean
     @Qualifier("jobDetail1")
     public JobDetail myJobDetail() {
         Map<String, String> mapProperties = customProperties.getMapProperties();
@@ -33,9 +32,9 @@ public class QuartzConfig {
                 .storeDurably()
                 .usingJobData(jobDataMap)
                 .build();
-    }
+    }*/
 
-    @Bean
+    /*@Bean
     @Qualifier("jobTrigger1")
     public Trigger myJobTrigger(@Qualifier("jobDetail1") JobDetail jobDetail) {
         log.info("开始定义触发器...");
@@ -49,7 +48,7 @@ public class QuartzConfig {
                                 .repeatForever()
                 )
                 .build();
-    }
+    }*/
 
 
     @Bean

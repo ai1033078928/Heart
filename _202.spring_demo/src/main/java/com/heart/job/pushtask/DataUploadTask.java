@@ -23,6 +23,7 @@ public class DataUploadTask extends UploadTask implements Runnable {
 
         try {
             Thread.sleep(10 * 1000L);
+            log.info("计数：" + countDownLatch.getCount());
             log.info("balabalabala...end");
         } catch (InterruptedException e) {
 

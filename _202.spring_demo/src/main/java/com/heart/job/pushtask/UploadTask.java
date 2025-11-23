@@ -74,7 +74,7 @@ public abstract class UploadTask {
         // 初始化部分文件名
         List<String> systems = Arrays.asList(sendSystemsArr);
         String filePartTime = ("day".equals(timeUnit) && systems.contains("dmd") && systems.size() == 1)
-                ? DateStrFormatUtil.getPointTime(0, delayTime, timeUnit)
+                ? DateStrFormatUtil.getPointTime(0, delayTime, "hour")
                 : thisLoadTime;
         this.fileNamePart = odsTable + "." + DateStrFormatUtil.getDateStrNoSeparator(filePartTime);  // db.tname.yyyyMMddhhmmss
     }

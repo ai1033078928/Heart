@@ -1,10 +1,8 @@
 package com.heart.job;
 
-import com.heart.contants.ConstantsSQL;
-import com.heart.datasource.DataSourceContextHolder;
-import com.heart.datasource.DataSourceType;
+import com.heart.entity.OdsLoadingJobTest;
 import com.heart.job.pushtask.DataUploadTask;
-import com.heart.service.HeartJobInfoService;
+import com.heart.service.IOdsLoadingJobTestService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -35,7 +33,7 @@ public class QuartzJob2 implements Job {
     @Qualifier("taskExecutor")
     ThreadPoolTaskExecutor taskExecutor;
     @Autowired
-    JdbcTemplate jdbcTemplate;
+    IOdsLoadingJobTestService iOdsLoadingJobTestService;
 
 
     @Override
@@ -56,6 +54,7 @@ public class QuartzJob2 implements Job {
 
         List<DataUploadTask> tasks = getDataPushTasks(jobDataMap);
         CountDownLatch countDownLatch = new CountDownLatch(tasks.size());
+        log.info("加载任务数：" + tasks.size());
         tasks.forEach(dataUploadTask -> {
             dataUploadTask.setCountDownLatch(countDownLatch);
             taskExecutor.execute(dataUploadTask);
@@ -68,7 +67,7 @@ public class QuartzJob2 implements Job {
             e.printStackTrace();
             // throw new RuntimeException(e);
         } finally {
-            latch.countDown();
+            latch.countDown();  // 修改标识位
         }
 
     }
@@ -77,27 +76,23 @@ public class QuartzJob2 implements Job {
         String timeInterval = jobDataMap.getString("timeInterval");
         List<DataUploadTask> res = new ArrayList<>();
 
-        // 使用 Map 作为参数
-        Map<String, Object> paramMap = new HashMap<>();
-        paramMap.put("timeInterval", timeInterval);
-        // 使用主数据源
-        DataSourceContextHolder.setDataSourceType(DataSourceType.PRIMARY);
-        List<Map<String, Object>> queried = jdbcTemplate.queryForList(ConstantsSQL.GET_TABLES_SQL, paramMap);
-        for (Map<String, Object> map : queried) {
+        List<Integer> timeIntervalList = Arrays.stream(timeInterval.split(",")).map(Integer::getInteger).collect(Collectors.toList());
+        List<OdsLoadingJobTest> activeLoadingJobs = iOdsLoadingJobTestService.getActiveLoadingJobs(timeIntervalList);
+        for (OdsLoadingJobTest job : activeLoadingJobs) {
             DataUploadTask task = new DataUploadTask();
-            task.setOdsTable(MapUtils.getString(map, "ods_table", ""));
-            task.setTimeInterval(MapUtils.getInteger(map, "time_interval"));
-            task.setTimeUnit(MapUtils.getString(map, "time_unit", ""));
-            task.setNeedCols(MapUtils.getString(map, "need_cols", ""));
-            task.setFromSystem(MapUtils.getString(map, "from_system", ""));
-            task.setPkCols(MapUtils.getString(map, "pk_cols", ""));
-            task.setStartLoadTime(MapUtils.getString(map, "start_load_time", ""));
-            task.setLastLoadTime(MapUtils.getString(map, "last_load_time", ""));  // 无须在time_unit之后
-            task.setDelayTime(MapUtils.getString(map, "delay_time", ""));
-            task.setSendSystems(MapUtils.getString(map, "send_systems", ""));
-            task.setModelSystem(MapUtils.getString(map, "model_table", ""));
-            task.setModelSystem(MapUtils.getString(map, "model_system", ""));
-            task.setLoadType(MapUtils.getInteger(map, "load_type"));
+            task.setOdsTable(job.getOdsTable());
+            task.setTimeInterval(job.getTimeInterval());
+            task.setTimeUnit(job.getTimeUnit());
+            task.setNeedCols(job.getNeedCols());
+            task.setFromSystem(job.getFromSystem());
+            task.setPkCols(job.getPkCols());
+            task.setStartLoadTime(job.getStartLoadTime());
+            task.setLastLoadTime(job.getLastLoadTime());  // 无须在time_unit之后
+            task.setDelayTime(job.getDelayTime());
+            task.setSendSystems(job.getSendSystems());
+            task.setModelTable(job.getModelTable());
+            task.setModelSystem(job.getModelSystem());
+            task.setLoadType(job.getLoadType());
             task.setOtherVariable();  // 根据已知变量初始化其他内置变量，或转换已知变量
 
             if (task.needLoad(true)) {  // 时间判断

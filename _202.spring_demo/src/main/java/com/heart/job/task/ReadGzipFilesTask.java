@@ -2,7 +2,6 @@ package com.heart.job.task;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.heart.datasource.DynamicDataSource;
 import com.heart.utils.ApacheFileUtil;
 import com.heart.utils.SpringUtils;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
@@ -11,6 +10,7 @@ import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.sql.DataSource;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -117,7 +117,7 @@ public class ReadGzipFilesTask implements Runnable {
 
     private void initDbConn() {
         // 与Durid配置文件指定的Bean一致
-        DynamicDataSource dataDataSource = (DynamicDataSource) SpringUtils.getBean("datasource");
+        DataSource dataDataSource = (DataSource) SpringUtils.getBean("datasource");
         try {
             // 此处druidDataSource.getConnection()获取到的类型是：com.alibaba.druid.pool.DruidPooledConnection，被druid包装过的，需要使用unwrap()转换一下
             this.conn = dataDataSource.getConnection();
