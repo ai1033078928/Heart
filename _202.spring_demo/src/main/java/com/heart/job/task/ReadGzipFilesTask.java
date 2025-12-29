@@ -334,7 +334,6 @@ public class ReadGzipFilesTask implements Runnable {
                     String line;
                     lineNum = 1L;
                     StringBuilder strLineData = new StringBuilder();
-                    Map<String, String> dataLine = new HashMap<>(needColsArr.length + 1);
                     List<String> fileHeadCols = null;
                     while ((line = reader.readLine()) != null) {
                         if (lineNum == 1L) {
@@ -348,6 +347,7 @@ public class ReadGzipFilesTask implements Runnable {
                             strLineData.append(line);
                             // 组装数据为 Map
                             assert fileHeadCols != null;
+                            Map<String, String> dataLine = new HashMap<>(needColsArr.length + 1);
                             Integer count = getDataCols(strLineData.toString(), fileHeadCols, dataLine);
                             if (count == fileHeadCols.size()) {
                                 processDataLine(dataLine, tablePK.split(String.valueOf(separator)), delStmt);
@@ -356,7 +356,7 @@ public class ReadGzipFilesTask implements Runnable {
                                 }
                                 lineNum++;
                                 strLineData.setLength(0);
-                                dataLine.clear();
+                                // dataLine.clear();
                             } else if (count < fileHeadCols.size()) {
                                 continue;
                             } else {

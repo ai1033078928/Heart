@@ -179,6 +179,25 @@
             <version>3.0.3</version>
         </dependency>
 
+        <!-- java ssh 包 -->
+        <dependency>
+            <groupId>com.jcraft</groupId>
+            <artifactId>jsch</artifactId>
+            <version>${jsch.version}</version>
+        </dependency>
+        <!-- sql 解析包 -->
+        <dependency>
+            <groupId>com.github.jsqlparser</groupId>
+            <artifactId>jsqlparser</artifactId>
+            <version>${jsqlparser.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>ant</groupId>
+            <artifactId>ant</artifactId>
+            <version>1.6.5</version>
+            <scope>compile</scope>
+        </dependency>
+
 
         <!-- 可不加 -->
         <!-- 运行状况 -->

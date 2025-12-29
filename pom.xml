@@ -79,6 +79,7 @@
         <h2db.version>1.4.200</h2db.version>
 
         <!-- 其他 -->
+        <jsch.version>0.1.55</jsch.version>  <!-- ssh包 -->
         <jsqlparser.version>4.3</jsqlparser.version>  <!-- sql格式化 -->
         <opencsv.version>5.9</opencsv.version>
         <lombok.version>1.18.38</lombok.version>
