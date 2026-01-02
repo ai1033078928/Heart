@@ -18,17 +18,17 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.tools.ant.util.Watchdog;
 
 
-public class ResendAllDataToTestEnv {
+public class ResendTabDataToTestEnv {
 
-    String url = "";
-    String user = "";
-    String password = "";
+    String url;
+    String user;
+    String password;
 
-    String impalaUrl = "";
+    String impalaUrl;
 
-    String linuxHost = "";
-    String linuxUserName = "";
-    String linuxPassWD = "";
+    String linuxHost;
+    String linuxUserName;
+    String linuxPassWD;
 
     Connection mysql_conn;
     Connection implala_conn;
@@ -42,8 +42,48 @@ public class ResendAllDataToTestEnv {
             //"|[\b\r\n\t]"                     // 可选：多余的控制字符
     );
 
+    public ResendTabDataToTestEnv() {
+        Properties config = getConfigFromFile("init.properties");
+        initVar(config);
+    }
+
+    private Properties getConfigFromFile(String file) {
+        Properties prop = new Properties();
+        try {
+            prop.load(ResendTabDataToTestEnv.class.getClassLoader().getResourceAsStream(file));
+        } catch (IOException e) {
+            e.printStackTrace();
+            // throw new RuntimeException(e);
+        }
+        return prop;
+    }
+
+    private void initVar(Properties conf) {
+        // TODO: chk column
+        this.url = conf.getProperty("url");
+        this.user = conf.getProperty("user");
+        this.password = conf.getProperty("password");
+        this.impalaUrl = conf.getProperty("impalaUrl");
+        this.linuxHost = conf.getProperty("linuxHost");
+        this.linuxUserName = conf.getProperty("linuxUserName");
+        this.linuxPassWD = conf.getProperty("linuxPassWD");
+    }
+
+    @Override
+    public String toString() {
+        return "ResendTabDataToTestEnv{" +
+                "url='" + url + '\'' +
+                ", user='" + user + '\'' +
+                ", password='" + StringUtils.isEmpty(password) + '\'' +
+                ", impalaUrl='" + StringUtils.isEmpty(impalaUrl) + '\'' +
+                ", linuxHost='" + linuxHost + '\'' +
+                ", linuxUserName='" + linuxUserName + '\'' +
+                ", linuxPassWD='" + StringUtils.isEmpty(linuxPassWD) + '\'' +
+                '}';
+    }
+
     public static void main(String[] args) {
-        ResendAllDataToTestEnv test = new ResendAllDataToTestEnv();
+        ResendTabDataToTestEnv test = new ResendTabDataToTestEnv();
         // atest2.insert_test();
         test.resendDataByJob("xxx.xxxx",
                 "xx",
@@ -100,11 +140,9 @@ public class ResendAllDataToTestEnv {
                 ;
                 List<String> resStrs = linuxExecCommands(this.session, Arrays.asList("ls -l " + path1, "ls -l " + path2));
                 // List<String> resStrs = linuxExecCommands(this.session, Arrays.asList("rm -f " + path1, "rm -f " + path2));
-                for (String str : resStrs) {
-                    System.out.println(str);
-                }
+                resStrs.forEach(System.out::println);
 
-                // linuxExecCommand(this.session, "ls " + path1);r
+                // linuxExecCommand(this.session, "ls " + path1);
                 // return;
             }
 
@@ -353,9 +391,106 @@ public class ResendAllDataToTestEnv {
                 channel.disconnect();
             }
         }
-
         return result;
+    }
 
+
+    /**
+     * @param session 会话
+     * @param commands 命令列表
+     * @param delayMs 执行间隔时间
+     * @param num 重复次数
+     * @throws JSchException
+     */
+    public void linuxExecCommandsOnlyPrint(Session session, List<String> commands, Long delayMs, int num) throws JSchException {
+        List<String> result = new ArrayList<>();
+        for (String command : commands) {
+            if (command.trim().startsWith("rm") && (command.trim().endsWith(" / ") || command.trim().endsWith("/"))) {
+                System.out.println(("包含危险删除操作，退出"));
+            }
+        }
+
+        // 执行多条命令
+        ChannelShell channel = null;
+        OutputStream outputStream = null;
+        PrintWriter printWriter = null;
+        Watchdog watchdog = new Watchdog(600 * 1000); // 执行超时时长
+
+        try {
+
+            channel = (ChannelShell) session.openChannel("shell");
+            channel.setPty(true);
+            channel.setEnv("LANG", "zh_CN.UTF-8");
+            InputStream inputStream = channel.getInputStream();
+            outputStream = channel.getOutputStream();
+            // 使用 PrintWriter 来方便地发送命令，autoFlush=true 确保 println 后立即发送
+            printWriter = new PrintWriter(outputStream, true);
+
+            Thread thread = Thread.currentThread();
+            watchdog.addTimeoutObserver(w -> thread.interrupt());
+
+            channel.connect();
+            watchdog.start();
+
+            Thread printThread = new Thread(() -> {
+                BufferedReader reader = null;
+                try {
+                    reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8));
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        System.out.println(line);
+                    }
+                } catch (IOException e) {
+                    // 通道关闭时，readLine会抛出异常
+                    System.out.println("\nShell channel closed by server.");
+                } finally {
+                    try {
+                        if (null == reader) reader.close();
+                    } catch (IOException e) {
+                    }
+                }
+
+            });
+            printThread.start();
+
+            for (int i = 0; i < num; i++) {
+                System.out.printf("---------------------------------- 第 %s 次执行 --------------------------\n", i+1);
+                for (String cmd : commands) {
+                    printWriter.println(cmd + " 2>&1");
+                }
+                if (i + 1 != num) Thread.sleep(delayMs);
+            }
+
+            if (commands.get(commands.size() - 1).contains("tail -f")) {
+                Thread.sleep(600 * 1000);
+            } else {
+                Thread.sleep(3 * 100);  // 等待另一进程打印完成
+            }
+
+            // 发送 exit 命令，通知远程 shell 结束
+            printWriter.println("exit");
+            // printWriter.flush();
+
+        } catch (Exception e) {
+            throw new JSchException("执行Shell命令失败", e);
+        } finally {
+            watchdog.stop();
+            if (outputStream != null) {
+                try {
+                    outputStream.close();
+                } catch (IOException ignores) {
+                }
+            }
+            if (printWriter != null) {
+                try {
+                    printWriter.close();
+                } catch (Exception ignores) {
+                }
+            }
+            if (channel != null && channel.isConnected()) {
+                channel.disconnect();
+            }
+        }
     }
 
 
